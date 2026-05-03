@@ -1,0 +1,47 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# expo
+.expo
+.expo-shared
+dist
+web-build
+expo-env.d.ts
+
+# native
+*.ipa
+*.apk
+*.aab
+ios/Pods
+ios/build
+android/build
+android/.gradle
+android/app/build
+*.orig.*
+
+# env
+.env
+.env.*
+!.env.example
+
+# eas
+.easignore
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# editor
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.DS_Store
+
+# misc
+*.pem
+.cache
