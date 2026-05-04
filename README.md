@@ -38,6 +38,7 @@ EAS Build → 스토어 배포
 
 ## 관련 문서
 
-- 워크스페이스 큰 그림: [`../CLAUDE.md`](../CLAUDE.md)
-- 레포 전략: [`../docs/design/00-repo-strategy.md`](../docs/design/00-repo-strategy.md)
-- 도메인 스키마: [`../docs/schema/`](../docs/schema/)
+- 워크스페이스 인덱스: [`../CLAUDE.md`](../CLAUDE.md) (로컬)
+- 레포 전략 / 스키마: anchor 레포 `working-mom-dad-api`
+  - [`working-mom-dad-api/docs/design/00-repo-strategy.md`](https://github.com/youth-corp/working-mom-dad-api/blob/main/docs/design/00-repo-strategy.md)
+  - [`working-mom-dad-api/docs/schema/`](https://github.com/youth-corp/working-mom-dad-api/tree/main/docs/schema)

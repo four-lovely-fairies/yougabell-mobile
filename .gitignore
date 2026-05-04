@@ -1,47 +1,50 @@
-# dependencies
-node_modules
-.pnpm-store
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# expo
-.expo
-.expo-shared
-dist
-web-build
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
 expo-env.d.ts
 
-# native
-*.ipa
-*.apk
-*.aab
-ios/Pods
-ios/build
-android/build
-android/.gradle
-android/app/build
+# Native
+.kotlin/
 *.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
 
-# env
-.env
-.env.*
-!.env.example
+# Metro
+.metro-health-check*
 
-# eas
-.easignore
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
 
-# logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# editor
-.idea
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
+# macOS
 .DS_Store
-
-# misc
 *.pem
-.cache
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
+# generated native folders
+/ios
+/android
+
+# --- Project additions ---
+.idea
+.pnpm-store
+
+# Allow committing the env example
+!.env.example
