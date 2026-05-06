@@ -1,7 +1,7 @@
-# working-mom-dad-mobile
+# yougabell-mobile
 
 > Expo RN 셸. 네이티브 기능 + WebView 컨테이너.
-> 워크스페이스 전체 컨벤션은 umbrella 레포 [`working-mom-dad`](https://github.com/youth-corp/working-mom-dad/blob/main/AGENTS.md) 참조.
+> 워크스페이스 전체 컨벤션은 umbrella 레포 [`yougabell`](https://github.com/four-lovely-fairies/yougabell/blob/main/AGENTS.md) 참조.
 > 디자인 시스템·토큰은 [`DESIGN.md`](./DESIGN.md) 참조 (Figma MCP 연결 후 채워짐).
 
 ## 빌드 · 실행 · 검증 명령
@@ -28,8 +28,8 @@ pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레
 
 ## 핵심 원칙
 
-- **얇은 셸**: UI는 가능한 한 `working-mom-dad-web`이 담당. RN은 네이티브 영역만.
-- **DB 직접 접근 금지**: 모든 도메인 호출은 `working-mom-dad-api`로.
+- **얇은 셸**: UI는 가능한 한 `yougabell-web`이 담당. RN은 네이티브 영역만.
+- **DB 직접 접근 금지**: 모든 도메인 호출은 `yougabell-api`로.
 - **인증**: Supabase Auth SDK. 토큰은 SecureStore에 저장하고 WebView로 안전하게 전달.
 - **네이티브 기능 범위**:
   - 푸시 알림 (Expo Notifications)

@@ -1,4 +1,4 @@
-# working-mom-dad-mobile — Claude Code
+# yougabell-mobile — Claude Code
 
 > Universal agent rules (Codex, Claude Code, Cursor 등 공용) live in [`AGENTS.md`](./AGENTS.md).
 > 디자인 시스템 컨텍스트는 [`DESIGN.md`](./DESIGN.md) (Figma MCP 연결 후).

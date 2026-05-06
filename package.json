@@ -1,5 +1,5 @@
 {
-  "name": "working-mom-dad-mobile",
+  "name": "yougabell-mobile",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -44,7 +44,7 @@
     "eslint-config-expo": "~10.0.0"
   },
   "private": true,
-  "description": "Working Mom Dad — RN shell (Expo, native APIs · push · WebView container)",
+  "description": "육아밸 — RN shell (Expo, native APIs · push · WebView container)",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=24"

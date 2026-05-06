@@ -1,4 +1,4 @@
-# Design System — working-mom-dad-mobile
+# Design System — yougabell-mobile
 
 > Expo RN 셸의 디자인 시스템 컨텍스트. 메인 UI는 web에 있으므로 **네이티브 영역에 한정**된 토큰·컴포넌트만 다룬다.
 > **현재 placeholder** — Figma MCP 연결 후 갱신.
@@ -15,7 +15,7 @@
 | Tab Bar | `tabBar.background`, `tabBar.active`, `tabBar.inactive` |
 | SafeArea 인셋 | OS 자동, 토큰 X |
 
-색상·타이포 토큰은 [web의 DESIGN.md](https://github.com/youth-corp/working-mom-dad-web/blob/main/DESIGN.md)와 동기화.
+색상·타이포 토큰은 [web의 DESIGN.md](https://github.com/four-lovely-fairies/yougabell-web/blob/main/DESIGN.md)와 동기화.
 
 ---
 
@@ -41,7 +41,7 @@
 | 영역 | 라우트 | 목적 |
 |---|---|---|
 | 스플래시 | `app/_layout.tsx` 진입 | 폰트·인증 로드 |
-| 메인 (WebView) | `app/(tabs)/index.tsx` | working-mom-dad-web 임베드 |
+| 메인 (WebView) | `app/(tabs)/index.tsx` | yougabell-web 임베드 |
 | 프로필/설정 | `app/(tabs)/explore.tsx` | 네이티브 설정 (푸시 토글 등) |
 | 모달 | `app/modal.tsx` | 카메라·갤러리 첨부 등 네이티브 시트 |
 
