@@ -39,6 +39,7 @@ EAS Build → 스토어 배포
 ## 관련 문서
 
 - 워크스페이스 인덱스: [`../CLAUDE.md`](../CLAUDE.md) (로컬)
-- 레포 전략 / 스키마: anchor 레포 `yougabell-api`
-  - [`yougabell-api/docs/design/00-repo-strategy.md`](https://github.com/four-lovely-fairies/yougabell-api/blob/main/docs/design/00-repo-strategy.md)
-  - [`yougabell-api/docs/schema/`](https://github.com/four-lovely-fairies/yougabell-api/tree/main/docs/schema)
+- 레포 전략 / 스키마 / 기능 기획: umbrella 레포 `yougabell`
+  - [`yougabell/docs/design/00-repo-strategy.md`](https://github.com/four-lovely-fairies/yougabell/blob/main/docs/design/00-repo-strategy.md)
+  - [`yougabell/docs/schema/`](https://github.com/four-lovely-fairies/yougabell/tree/main/docs/schema)
+  - [`yougabell/docs/features/`](https://github.com/four-lovely-fairies/yougabell/tree/main/docs/features)
