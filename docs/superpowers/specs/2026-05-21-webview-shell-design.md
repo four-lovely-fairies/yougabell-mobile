@@ -1,153 +1,153 @@
-# Expo WebView Shell Design
+# Expo WebView 셸 설계
 
-## Context
+## 배경
 
-`yougabell-mobile` is the React Native shell for the product. The main user interface already exists in `yougabell-web`, and the immediate goal is to ship an Expo app that opens the deployed web app inside a WebView using Expo development builds and EAS Build.
+`yougabell-mobile`은 제품의 React Native 셸이다. 핵심 사용자 인터페이스는 이미 `yougabell-web`에 구현되어 있고, 이번 단계의 목표는 Expo development build와 EAS Build를 기준으로 배포된 웹 앱을 앱 내부 WebView에 띄우는 것이다.
 
-The current mobile repository is still close to the default Expo scaffold. For this task, the scaffold can be discarded and replaced with a focused WebView shell.
+현재 모바일 레포는 아직 Expo 기본 스캐폴드에 가까운 상태다. 이번 작업에서는 기존 예제 구조를 버리고 WebView 중심 셸로 정리한다.
 
-## Goal
+## 목표
 
-Build a first mobile shell that:
+첫 번째 모바일 셸은 아래를 만족해야 한다.
 
-- opens the deployed `yougabell-web` by default
-- allows local web override during development builds
-- shows a thin native loading state before the first page load completes
-- shows a full-screen native error state with a retry action if the first load fails
+- 기본값으로 배포된 `yougabell-web`을 연다.
+- development build에서 로컬 웹 주소로 오버라이드할 수 있다.
+- 첫 페이지 로드가 끝나기 전까지 얇은 네이티브 로딩 상태를 보여준다.
+- 첫 로드 실패 시 전체 화면 네이티브 에러와 재시도 동작을 제공한다.
 
-## Non-Goals
+## 비목표
 
-This phase does not include:
+이번 단계에 포함하지 않는 범위는 아래와 같다.
 
-- Supabase Auth token injection from native to web
-- `postMessage` bridge contracts between native and web
-- push notification entry handling
-- deep link routing into web routes
-- Android hardware back behavior
-- external link interception
-- file upload or camera integration from WebView
+- 네이티브에서 웹으로 Supabase Auth 토큰 주입
+- 네이티브와 웹 간 `postMessage` 브리지 계약
+- 푸시 알림 진입 처리
+- 웹 라우트 대상 딥링크 처리
+- Android 하드웨어 백 처리
+- 외부 링크 인터셉트
+- WebView 기반 파일 업로드 또는 카메라 연동
 
-The existing web app continues to own web-side authentication, onboarding, loading states, and domain behavior.
+웹 로그인, 온보딩 분기, 웹 내부 로딩 상태, 도메인 동작은 기존 `yougabell-web`이 그대로 책임진다.
 
-## Recommended Architecture
+## 권장 구조
 
-Keep `expo-router`, but reduce the app to a single entry route and separate internal responsibilities into small modules.
+`expo-router`는 유지하되, 앱은 단일 진입 라우트 중심으로 줄이고 내부 책임은 작은 모듈로 분리한다.
 
-### Route structure
+### 라우트 구조
 
-- `app/_layout.tsx`: root layout only
-- `app/index.tsx`: single route entry for the shell
+- `app/_layout.tsx`: 루트 레이아웃만 담당
+- `app/index.tsx`: WebView 셸 진입 라우트
 
-### Module structure
+### 모듈 구조
 
-- `webview/web-shell-screen.tsx`: composes the screen, owns shell state transitions
-- `webview/use-webview-source.ts`: resolves the URL to load
-- `webview/dev-web-config.ts`: development-only override candidates and toggle
+- `webview/web-shell-screen.tsx`: 화면 조합, 셸 상태 전환 담당
+- `webview/use-webview-source.ts`: 실제 로드할 URL 결정
+- `webview/dev-web-config.ts`: development build 전용 오버라이드 후보와 토글 관리
 
-This keeps the user-facing app simple while leaving a clean seam for later additions like auth handoff, native-web messaging, and deep-link entry logic.
+이 구조는 사용자 입장에서는 단순한 단일 화면 앱처럼 보이게 하면서도, 이후 인증 핸드오프, 네이티브-웹 메시지 브리지, 딥링크 진입 정책을 붙일 수 있는 경계를 남긴다.
 
-## URL Resolution Policy
+## URL 결정 정책
 
-### Default source
+### 기본 URL
 
-Use `EXPO_PUBLIC_WEB_URL` as the canonical default URL. This should point to the deployed `yougabell-web` environment.
+기본 URL 소스는 `EXPO_PUBLIC_WEB_URL`이다. 이 값은 배포된 `yougabell-web` 환경을 가리키도록 둔다.
 
-### Development override
+### 개발 오버라이드
 
-Development builds may override the URL through a small config module with explicit candidates such as:
+development build에서는 별도 설정 모듈을 통해 로컬 웹 주소로 오버라이드할 수 있다. 대표 후보는 아래와 같다.
 
-- iOS simulator: `http://localhost:3000`
-- Android emulator: `http://10.0.2.2:3000`
-- physical device: local network IP, set manually
+- iOS 시뮬레이터: `http://localhost:3000`
+- Android 에뮬레이터: `http://10.0.2.2:3000`
+- 실기기: 개발자가 직접 지정한 로컬 네트워크 IP
 
-### Selection rule
+### 선택 규칙
 
-- production or preview-like app usage: always use `EXPO_PUBLIC_WEB_URL`
-- development build: use the dev override only when the toggle is enabled
-- if no dev override is enabled, fall back to `EXPO_PUBLIC_WEB_URL`
+- 프로덕션 또는 프리뷰 성격의 앱 사용에서는 항상 `EXPO_PUBLIC_WEB_URL`을 사용한다.
+- development build에서는 오버라이드 토글이 켜진 경우에만 개발 URL을 사용한다.
+- 오버라이드가 꺼져 있으면 `EXPO_PUBLIC_WEB_URL`로 되돌린다.
 
-The first implementation should avoid a debug UI for switching URLs. A code-level toggle is enough for now.
+첫 구현에서는 디버그용 URL 전환 UI를 만들지 않는다. 코드 레벨 토글이면 충분하다.
 
-## Shell State Model
+## 셸 상태 모델
 
-The native shell should manage only the first-load container experience around the WebView.
+네이티브 셸은 WebView 주변의 첫 진입 경험만 관리한다.
 
 ### `loading`
 
-Shown while the first WebView page is being loaded and before the page is considered ready.
+첫 WebView 페이지가 아직 준비되지 않았고, 첫 화면이 완전히 보이기 전 상태다.
 
-The native loading UI should be intentionally thin. Its job is to prevent a blank white screen, not to reproduce the web app's internal loading UX.
+이때의 네이티브 로딩 UI는 의도적으로 얇아야 한다. 목적은 빈 흰 화면을 막는 것이지, 웹 앱 내부 로딩 UX를 다시 만드는 것이 아니다.
 
 ### `ready`
 
-Entered after the first page load completes successfully.
+첫 페이지 로드가 성공적으로 끝난 뒤의 상태다.
 
-Once in `ready`, the WebView is fully responsible for the experience. Any loading related to login checks, onboarding gates, or home data fetching remains web-owned.
+`ready`에 들어간 뒤에는 WebView가 전체 경험을 책임진다. 로그인 확인, 온보딩 분기, 홈 데이터 fetch 같은 로딩은 계속 웹이 담당한다.
 
 ### `error`
 
-Entered when the first page load fails or the initial navigation cannot be completed.
+첫 페이지 로드에 실패했거나 초기 네비게이션을 완료하지 못한 상태다.
 
-The error state should show:
+에러 화면은 아래만 제공한다.
 
-- a simple error message
-- a single `다시 시도` action
+- 단순한 에러 메시지
+- `다시 시도` 버튼 하나
 
-Retry should force the WebView to remount so the initial request is attempted again from a clean shell state.
+`다시 시도`는 WebView를 강제로 다시 마운트해서 초기 요청을 깨끗한 상태에서 다시 시도하게 만든다.
 
-## UX Boundaries
+## UX 경계
 
-The shell should stay thin and avoid taking over responsibilities that belong to the web app.
+이 셸은 얇게 유지해야 하며, 웹 앱이 책임져야 할 영역을 가져오지 않는다.
 
-- Native loading covers only the gap before the first page is visible.
-- Web loading remains the source of truth once the page is running.
-- Native error handling covers first-load failure only.
-- No native header or tab chrome is added in this phase.
+- 네이티브 로딩은 첫 페이지가 보이기 전 공백 구간만 덮는다.
+- 웹 내부 로딩은 첫 로드 이후에도 계속 웹이 진실의 소스다.
+- 네이티브 에러 처리는 첫 로드 실패에만 한정한다.
+- 이번 단계에서는 네이티브 헤더나 탭 크롬을 추가하지 않는다.
 
-## Implementation Scope
+## 구현 범위
 
-### Included
+### 포함
 
-- remove Expo starter tab/demo screens
-- install and wire `react-native-webview`
-- replace the default app flow with a single-shell route
-- implement URL resolution from env plus dev override config
-- implement native first-load loading state
-- implement native first-load error state and retry
-- update setup docs for Expo development build and EAS Build expectations
+- Expo 기본 탭/예제 화면 제거
+- `react-native-webview` 설치 및 연결
+- 단일 WebView 셸 중심 라우트로 앱 구조 교체
+- 환경 변수와 개발 오버라이드 기반 URL 결정 로직 구현
+- 첫 진입용 네이티브 로딩 상태 구현
+- 첫 로드 실패용 네이티브 에러 상태와 재시도 구현
+- Expo development build 및 EAS Build 기준으로 README와 환경 설정 예시 정리
 
-### Excluded
+### 제외
 
-- native-managed login session sharing
-- native-to-web bridge API
-- push, deep links, and external navigation policies
-- platform-specific advanced WebView behaviors
+- 네이티브가 관리하는 로그인 세션 공유
+- 네이티브-웹 브리지 API
+- 푸시, 딥링크, 외부 링크 네비게이션 정책
+- 플랫폼별 고급 WebView 동작 제어
 
-## Testing Strategy
+## 검증 전략
 
-### Static verification
+### 정적 검증
 
-- `pnpm lint` passes
-- TypeScript errors are absent
+- `pnpm lint` 통과
+- TypeScript 에러 없음
 
-### Manual verification
+### 수동 검증
 
-- the app opens the deployed web URL by default
-- when development override is enabled, the app opens the selected local URL
-- a thin native loading screen is visible before the first successful load
-- when the initial load fails, the error screen appears
-- tapping `다시 시도` reloads the WebView and retries the initial navigation
+- 기본 설정에서 배포 URL이 열린다.
+- 개발 오버라이드 활성화 시 지정한 로컬 URL이 열린다.
+- 첫 성공 로드 전에 얇은 네이티브 로딩 화면이 잠깐 보인다.
+- 초기 로드 실패 시 에러 화면이 노출된다.
+- `다시 시도`를 누르면 WebView가 다시 로드되며 초기 네비게이션을 재시도한다.
 
-## Risks and Follow-Up
+## 리스크와 후속 과제
 
-### Local network variance
+### 로컬 네트워크 편차
 
-Physical-device local development will depend on the developer's machine IP and network reachability. This is expected and should stay outside the first implementation scope.
+실기기 로컬 개발은 개발자 장비의 IP와 네트워크 연결 상태에 영향을 받는다. 이는 예상된 제약이며 이번 구현 범위 밖으로 둔다.
 
-### Auth continuity
+### 인증 연속성
 
-If product requirements later demand seamless native-to-web session continuity, a separate design is needed for Supabase session handoff. That is intentionally postponed.
+향후 네이티브 로그인 세션과 웹 로그인 세션을 자연스럽게 이어야 한다면, Supabase 세션 핸드오프 전용 설계가 별도로 필요하다. 이번 단계에서는 의도적으로 미룬다.
 
-### Navigation policy growth
+### 네비게이션 정책 확장
 
-As soon as push links, deep links, or external OAuth callbacks need native handling, the shell will need a dedicated navigation policy layer. The proposed module boundaries are chosen to support that future split.
+푸시 링크, 딥링크, 외부 OAuth 콜백 등을 네이티브가 처리해야 하는 시점이 오면 별도 네비게이션 정책 계층이 필요하다. 이번 구조 분리는 그 확장을 염두에 둔 것이다.
