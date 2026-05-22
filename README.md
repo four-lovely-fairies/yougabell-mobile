@@ -38,8 +38,23 @@ pnpm start
 - 로컬 실행: `pnpm start`
 - Android 개발 빌드 실행: `pnpm android`
 - iOS 개발 빌드 실행: `pnpm ios`
-- 프로덕션 빌드: `eas build --platform ios`
-- 안드로이드 빌드: `eas build --platform android`
+- EAS CLI 확인: `pnpm exec eas --version`
+- Android development build: `pnpm eas:build:android:dev`
+- Android preview build: `pnpm eas:build:android:preview`
+- Android production build: `pnpm eas:build:android:prod`
+- iOS development build: `pnpm eas:build:ios:dev`
+- iOS preview build: `pnpm eas:build:ios:preview`
+- iOS production build: `pnpm eas:build:ios:prod`
+
+처음 한 번은 아래 순서로 진행한다.
+
+```bash
+pnpm exec eas login
+pnpm exec eas build:configure
+pnpm eas:build:android:dev
+```
+
+`eas build`는 Expo 계정 로그인과 원격 빌드 환경이 필요하다. 로그인 전에는 로컬에서 명령 존재 여부까지만 확인 가능하다.
 
 ## Role
 
