@@ -12,7 +12,8 @@ pnpm start              # expo start (Metro bundler)
 pnpm android            # expo start --android (에뮬레이터)
 pnpm ios                # expo start --ios (시뮬레이터)
 pnpm web                # expo start --web (참고용, 메인 타깃 아님)
-pnpm lint               # expo lint
+pnpm lint               # eslint .
+pnpm test               # jest
 pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레이트 초기화)
 ```
 
@@ -60,6 +61,12 @@ pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레
 ## 환경 변수
 
 `EXPO_PUBLIC_*`은 **빌드 타임에 번들에 노출**됨 (시크릿 X). EAS Secrets로 환경별 분리. `.env.example` 참조.
+
+## 테스트 규칙
+
+- RN 테스트는 **`@testing-library/react-native`만 사용**한다.
+- **`@testing-library/jest-native`는 사용하지 않는다.** deprecated 상태이므로 다시 추가하지 않는다.
+- matcher는 `@testing-library/react-native`의 내장 matcher를 기준으로 쓴다.
 
 ## 배포
 
