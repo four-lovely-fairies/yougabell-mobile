@@ -4,6 +4,11 @@ import type { WebViewMessageEvent } from "react-native-webview";
 import { WebView } from "react-native-webview";
 
 import {
+  NativeAppleSignInCancelledError,
+  NativeAppleSignInError,
+  signInWithApple,
+} from "../auth/apple-sign-in";
+import {
   NativeGoogleSignInCancelledError,
   NativeGoogleSignInError,
   signInWithGoogleInBrowser,
@@ -91,6 +96,32 @@ export function WebShellScreen() {
           webViewRef.current?.injectJavaScript(
             buildNativeMessageScript({
               type: "NATIVE_GOOGLE_SIGN_IN_ERROR",
+              payload: { message: messageText },
+            }),
+          );
+        }
+        return;
+      case "REQUEST_NATIVE_APPLE_SIGN_IN":
+        try {
+          await signInWithApple();
+        } catch (error) {
+          if (error instanceof NativeAppleSignInCancelledError) {
+            webViewRef.current?.injectJavaScript(
+              buildNativeMessageScript({
+                type: "NATIVE_APPLE_SIGN_IN_CANCELLED",
+              }),
+            );
+            return;
+          }
+
+          const messageText =
+            error instanceof NativeAppleSignInError
+              ? error.message
+              : "Apple 로그인에 실패했습니다. 다시 시도해 주세요.";
+
+          webViewRef.current?.injectJavaScript(
+            buildNativeMessageScript({
+              type: "NATIVE_APPLE_SIGN_IN_ERROR",
               payload: { message: messageText },
             }),
           );

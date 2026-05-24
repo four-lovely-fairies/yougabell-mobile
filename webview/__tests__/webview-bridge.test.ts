@@ -14,6 +14,14 @@ describe("webview bridge helpers", () => {
     ).toEqual({ type: "REQUEST_NATIVE_GOOGLE_SIGN_IN" });
   });
 
+  it("parses a native apple sign-in request", () => {
+    expect(
+      parseWebToNativeMessage(
+        JSON.stringify({ type: "REQUEST_NATIVE_APPLE_SIGN_IN" }),
+      ),
+    ).toEqual({ type: "REQUEST_NATIVE_APPLE_SIGN_IN" });
+  });
+
   it("rejects malformed onboarding messages", () => {
     expect(
       parseWebToNativeMessage(

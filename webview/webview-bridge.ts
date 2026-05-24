@@ -5,6 +5,7 @@ export const NATIVE_WEBVIEW_EVENT_NAME = "yougabell-native-message";
 export type WebToNativeMessage =
   | { type: "WEB_READY" }
   | { type: "REQUEST_NATIVE_GOOGLE_SIGN_IN" }
+  | { type: "REQUEST_NATIVE_APPLE_SIGN_IN" }
   | { type: "REQUEST_PUSH_PERMISSION" }
   | { type: "ONBOARDING_COMPLETE"; payload: { userId: string } }
   | { type: "LOGOUT" };
@@ -16,7 +17,9 @@ export type NativeToWebMessage =
     }
   | { type: "SUPABASE_SESSION_CLEARED" }
   | { type: "NATIVE_GOOGLE_SIGN_IN_CANCELLED" }
-  | { type: "NATIVE_GOOGLE_SIGN_IN_ERROR"; payload: { message: string } };
+  | { type: "NATIVE_GOOGLE_SIGN_IN_ERROR"; payload: { message: string } }
+  | { type: "NATIVE_APPLE_SIGN_IN_CANCELLED" }
+  | { type: "NATIVE_APPLE_SIGN_IN_ERROR"; payload: { message: string } };
 
 export function buildWebViewBootstrapScript() {
   return "window.__YOUGABELL_NATIVE__ = true; true;";
@@ -33,6 +36,7 @@ export function parseWebToNativeMessage(rawMessage: string): WebToNativeMessage 
     switch (parsed.type) {
       case "WEB_READY":
       case "REQUEST_NATIVE_GOOGLE_SIGN_IN":
+      case "REQUEST_NATIVE_APPLE_SIGN_IN":
       case "REQUEST_PUSH_PERMISSION":
       case "LOGOUT":
         return parsed as WebToNativeMessage;

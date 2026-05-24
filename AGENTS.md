@@ -39,6 +39,7 @@ pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레
   - 딥링크
 - **WebView ↔ Native 통신**: `postMessage` 프로토콜은 `webview/webview-bridge.ts`를 단일 진실로 사용.
 - **Google OAuth**: WebView 안에서 직접 시작하지 않는다. mobile이 외부 보안 브라우저 OAuth를 수행하고 WebView 세션을 동기화한다.
+- **Apple OAuth**: iOS는 `expo-apple-authentication` 기반 native 로그인, Android는 외부 보안 브라우저 OAuth를 사용한다.
 - **컴포넌트 파일명**: kebab-case (`webview-bridge.tsx`).
 
 ## 디렉토리 (src 없는 형식, expo-router 기준)

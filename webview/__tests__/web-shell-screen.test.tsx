@@ -15,6 +15,12 @@ jest.mock("../../auth/google-sign-in", () => ({
   NativeGoogleSignInError: class NativeGoogleSignInError extends Error {},
 }));
 
+jest.mock("../../auth/apple-sign-in", () => ({
+  signInWithApple: jest.fn(),
+  NativeAppleSignInCancelledError: class NativeAppleSignInCancelledError extends Error {},
+  NativeAppleSignInError: class NativeAppleSignInError extends Error {},
+}));
+
 jest.mock("../../auth/supabase-client", () => ({
   getMobileSupabaseClient: () => ({
     auth: {

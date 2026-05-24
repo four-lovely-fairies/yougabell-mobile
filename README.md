@@ -74,6 +74,7 @@ pnpm eas:build:android:dev
   - 딥링크
 - SafeArea / 시스템 UI
 - Google 로그인은 mobile이 외부 보안 브라우저 OAuth로 처리하고, 획득한 Supabase 세션을 WebView에 주입
+- Apple 로그인은 iOS에서 native Apple Authentication으로 처리하고, Android에서는 외부 보안 브라우저 OAuth로 처리한 뒤 Supabase 세션을 WebView에 주입
 - DB 직접 접근 X — 모든 도메인 호출은 `yougabell-api`
 
 ## Hosting
