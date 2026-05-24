@@ -12,7 +12,8 @@ pnpm start              # expo start (Metro bundler)
 pnpm android            # expo start --android (에뮬레이터)
 pnpm ios                # expo start --ios (시뮬레이터)
 pnpm web                # expo start --web (참고용, 메인 타깃 아님)
-pnpm lint               # expo lint
+pnpm lint               # eslint .
+pnpm test               # jest
 pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레이트 초기화)
 ```
 
@@ -36,7 +37,9 @@ pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레
   - 생체 인증 / SecureStore
   - 카메라 · 사진 (성장 기록 첨부)
   - 딥링크
-- **WebView ↔ Native 통신**: `postMessage` 프로토콜 정의 필요 (TBD).
+- **WebView ↔ Native 통신**: `postMessage` 프로토콜은 `webview/webview-bridge.ts`를 단일 진실로 사용.
+- **Google OAuth**: WebView 안에서 직접 시작하지 않는다. mobile이 외부 보안 브라우저 OAuth를 수행하고 WebView 세션을 동기화한다.
+- **Apple OAuth**: iOS는 `expo-apple-authentication` 기반 native 로그인, Android는 외부 보안 브라우저 OAuth를 사용한다.
 - **컴포넌트 파일명**: kebab-case (`webview-bridge.tsx`).
 
 ## 디렉토리 (src 없는 형식, expo-router 기준)
@@ -60,6 +63,18 @@ pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레
 ## 환경 변수
 
 `EXPO_PUBLIC_*`은 **빌드 타임에 번들에 노출**됨 (시크릿 X). EAS Secrets로 환경별 분리. `.env.example` 참조.
+
+- `EXPO_PUBLIC_WEB_URL`
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+
+Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추가한다.
+
+## 테스트 규칙
+
+- RN 테스트는 **`@testing-library/react-native`만 사용**한다.
+- **`@testing-library/jest-native`는 사용하지 않는다.** deprecated 상태이므로 다시 추가하지 않는다.
+- matcher는 `@testing-library/react-native`의 내장 matcher를 기준으로 쓴다.
 
 ## 배포
 
