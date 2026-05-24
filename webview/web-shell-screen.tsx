@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import type { ShouldStartLoadRequest } from "react-native-webview/lib/WebViewTypes";
 import type { WebViewMessageEvent } from "react-native-webview";
 import { WebView } from "react-native-webview";
 
@@ -22,6 +23,7 @@ import {
   buildWebViewBootstrapScript,
   parseWebToNativeMessage,
 } from "./webview-bridge";
+import { getInterceptedNativeOAuthProvider } from "./oauth-intercept";
 import { webShellStyles as styles } from "./web-shell-styles";
 
 type WebShellPhase = "loading" | "ready" | "error";
@@ -36,6 +38,60 @@ export function WebShellScreen() {
     setPhase("loading");
     setReloadKey((current) => current + 1);
   };
+
+  async function handleGoogleSignInRequest() {
+    try {
+      await signInWithGoogleInBrowser();
+    } catch (error) {
+      if (error instanceof NativeGoogleSignInCancelledError) {
+        webViewRef.current?.injectJavaScript(
+          buildNativeMessageScript({
+            type: "NATIVE_GOOGLE_SIGN_IN_CANCELLED",
+          }),
+        );
+        return;
+      }
+
+      const messageText =
+        error instanceof NativeGoogleSignInError
+          ? error.message
+          : "Google 로그인에 실패했습니다. 다시 시도해 주세요.";
+
+      webViewRef.current?.injectJavaScript(
+        buildNativeMessageScript({
+          type: "NATIVE_GOOGLE_SIGN_IN_ERROR",
+          payload: { message: messageText },
+        }),
+      );
+    }
+  }
+
+  async function handleAppleSignInRequest() {
+    try {
+      await signInWithApple();
+    } catch (error) {
+      if (error instanceof NativeAppleSignInCancelledError) {
+        webViewRef.current?.injectJavaScript(
+          buildNativeMessageScript({
+            type: "NATIVE_APPLE_SIGN_IN_CANCELLED",
+          }),
+        );
+        return;
+      }
+
+      const messageText =
+        error instanceof NativeAppleSignInError
+          ? error.message
+          : "Apple 로그인에 실패했습니다. 다시 시도해 주세요.";
+
+      webViewRef.current?.injectJavaScript(
+        buildNativeMessageScript({
+          type: "NATIVE_APPLE_SIGN_IN_ERROR",
+          payload: { message: messageText },
+        }),
+      );
+    }
+  }
 
   async function syncSessionToWebView() {
     const { data } = await getMobileSupabaseClient().auth.getSession();
@@ -76,56 +132,10 @@ export function WebShellScreen() {
         await syncSessionToWebView();
         return;
       case "REQUEST_NATIVE_GOOGLE_SIGN_IN":
-        try {
-          await signInWithGoogleInBrowser();
-        } catch (error) {
-          if (error instanceof NativeGoogleSignInCancelledError) {
-            webViewRef.current?.injectJavaScript(
-              buildNativeMessageScript({
-                type: "NATIVE_GOOGLE_SIGN_IN_CANCELLED",
-              }),
-            );
-            return;
-          }
-
-          const messageText =
-            error instanceof NativeGoogleSignInError
-              ? error.message
-              : "Google 로그인에 실패했습니다. 다시 시도해 주세요.";
-
-          webViewRef.current?.injectJavaScript(
-            buildNativeMessageScript({
-              type: "NATIVE_GOOGLE_SIGN_IN_ERROR",
-              payload: { message: messageText },
-            }),
-          );
-        }
+        await handleGoogleSignInRequest();
         return;
       case "REQUEST_NATIVE_APPLE_SIGN_IN":
-        try {
-          await signInWithApple();
-        } catch (error) {
-          if (error instanceof NativeAppleSignInCancelledError) {
-            webViewRef.current?.injectJavaScript(
-              buildNativeMessageScript({
-                type: "NATIVE_APPLE_SIGN_IN_CANCELLED",
-              }),
-            );
-            return;
-          }
-
-          const messageText =
-            error instanceof NativeAppleSignInError
-              ? error.message
-              : "Apple 로그인에 실패했습니다. 다시 시도해 주세요.";
-
-          webViewRef.current?.injectJavaScript(
-            buildNativeMessageScript({
-              type: "NATIVE_APPLE_SIGN_IN_ERROR",
-              payload: { message: messageText },
-            }),
-          );
-        }
+        await handleAppleSignInRequest();
         return;
       case "LOGOUT":
         await getMobileSupabaseClient().auth.signOut();
@@ -136,6 +146,24 @@ export function WebShellScreen() {
       default:
         return;
     }
+  };
+
+  const handleShouldStartLoadWithRequest = (
+    request: ShouldStartLoadRequest,
+  ) => {
+    const provider = getInterceptedNativeOAuthProvider(request.url);
+
+    if (provider === "google") {
+      void handleGoogleSignInRequest();
+      return false;
+    }
+
+    if (provider === "apple") {
+      void handleAppleSignInRequest();
+      return false;
+    }
+
+    return true;
   };
 
   return (
@@ -149,6 +177,7 @@ export function WebShellScreen() {
         injectedJavaScriptBeforeContentLoaded={buildWebViewBootstrapScript()}
         onLoadEnd={() => setPhase("ready")}
         onError={() => setPhase("error")}
+        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onMessage={(event) => {
           void handleWebMessage(event);
         }}
