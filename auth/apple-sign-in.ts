@@ -4,6 +4,7 @@ import * as Crypto from "expo-crypto";
 import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 
+import { parseOAuthCallback } from "./oauth-callback";
 import { getMobileSupabaseClient } from "./supabase-client";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -53,15 +54,32 @@ async function signInWithAppleInBrowser() {
     throw new NativeAppleSignInCancelledError();
   }
 
-  const callbackUrl = new URL(result.url);
-  const code = callbackUrl.searchParams.get("code");
+  const callback = parseOAuthCallback(result.url);
 
-  if (!code) {
-    throw new NativeAppleSignInError();
+  if (callback.kind === "session") {
+    const { data: sessionData, error: setSessionError } =
+      await mobileSupabase.auth.setSession({
+        access_token: callback.accessToken,
+        refresh_token: callback.refreshToken,
+      });
+
+    if (setSessionError || !sessionData.session) {
+      throw new NativeAppleSignInError(
+        setSessionError?.message ?? "Supabase 세션 저장에 실패했습니다.",
+      );
+    }
+
+    return sessionData.session;
+  }
+
+  if (callback.kind === "error") {
+    throw new NativeAppleSignInError(
+      `콜백에 code가 없습니다. params=${callback.paramKeys} error=${callback.error}`,
+    );
   }
 
   const { data: sessionData, error: exchangeError } =
-    await mobileSupabase.auth.exchangeCodeForSession(code);
+    await mobileSupabase.auth.exchangeCodeForSession(callback.code);
 
   if (exchangeError || !sessionData.session) {
     throw new NativeAppleSignInError();

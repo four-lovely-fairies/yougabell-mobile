@@ -6,6 +6,7 @@ export default function RootLayout() {
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="auth/callback" />
         <Stack.Screen name="index" />
       </Stack>
       <StatusBar style="dark" />

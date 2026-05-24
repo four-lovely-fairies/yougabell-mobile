@@ -1,6 +1,7 @@
 import { makeRedirectUri } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
+import { parseOAuthCallback } from "./oauth-callback";
 import { getMobileSupabaseClient } from "./supabase-client";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -44,7 +45,9 @@ export async function signInWithGoogleInBrowser() {
   });
 
   if (error || !data?.url) {
-    throw new NativeGoogleSignInError();
+    throw new NativeGoogleSignInError(
+      error?.message ?? "Google OAuth URL을 생성하지 못했습니다.",
+    );
   }
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
@@ -53,18 +56,37 @@ export async function signInWithGoogleInBrowser() {
     throw new NativeGoogleSignInCancelledError();
   }
 
-  const callbackUrl = new URL(result.url);
-  const code = callbackUrl.searchParams.get("code");
+  const callback = parseOAuthCallback(result.url);
 
-  if (!code) {
-    throw new NativeGoogleSignInError();
+  if (callback.kind === "session") {
+    const { data: sessionData, error: setSessionError } =
+      await mobileSupabase.auth.setSession({
+        access_token: callback.accessToken,
+        refresh_token: callback.refreshToken,
+      });
+
+    if (setSessionError || !sessionData.session) {
+      throw new NativeGoogleSignInError(
+        setSessionError?.message ?? "Supabase 세션 저장에 실패했습니다.",
+      );
+    }
+
+    return sessionData.session;
+  }
+
+  if (callback.kind === "error") {
+    throw new NativeGoogleSignInError(
+      `콜백에 code가 없습니다. params=${callback.paramKeys} error=${callback.error}`,
+    );
   }
 
   const { data: sessionData, error: exchangeError } =
-    await mobileSupabase.auth.exchangeCodeForSession(code);
+    await mobileSupabase.auth.exchangeCodeForSession(callback.code);
 
   if (exchangeError || !sessionData.session) {
-    throw new NativeGoogleSignInError();
+    throw new NativeGoogleSignInError(
+      exchangeError?.message ?? "Supabase 세션 교환에 실패했습니다.",
+    );
   }
 
   return sessionData.session;
