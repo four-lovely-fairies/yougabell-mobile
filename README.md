@@ -25,7 +25,15 @@ pnpm start
 - `EXPO_PUBLIC_WEB_URL`
   - 기본 WebView 대상 URL
   - 배포된 `yougabell-web` 주소를 넣는다
+- `EXPO_PUBLIC_SUPABASE_URL`
+  - mobile 네이티브 Google 로그인에 사용하는 Supabase 프로젝트 URL
+- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  - mobile 네이티브 Google 로그인에 사용하는 Supabase publishable key
 - development build에서 로컬 웹을 붙이고 싶으면 `webview/dev-web-config.ts`에서 오버라이드 토글과 URL을 바꾼다
+
+Supabase Auth 설정에는 아래 redirect allow-list를 추가해야 한다.
+
+- `yougabell://auth/callback`
 
 대표 로컬 URL 예시:
 
@@ -64,8 +72,8 @@ pnpm eas:build:android:dev
   - 생체 인증 / 보안 저장소
   - 카메라 · 사진 (성장 기록)
   - 딥링크
-  - SafeArea / 시스템 UI
-- 현재 WebView 셸 1차 범위에서는 웹이 직접 로그인 상태를 처리
+- SafeArea / 시스템 UI
+- Google 로그인은 mobile이 외부 보안 브라우저 OAuth로 처리하고, 획득한 Supabase 세션을 WebView에 주입
 - DB 직접 접근 X — 모든 도메인 호출은 `yougabell-api`
 
 ## Hosting

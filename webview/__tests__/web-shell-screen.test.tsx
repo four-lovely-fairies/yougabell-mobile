@@ -9,6 +9,24 @@ jest.mock("../use-webview-source", () => ({
   }),
 }));
 
+jest.mock("../../auth/google-sign-in", () => ({
+  signInWithGoogleInBrowser: jest.fn(),
+  NativeGoogleSignInCancelledError: class NativeGoogleSignInCancelledError extends Error {},
+  NativeGoogleSignInError: class NativeGoogleSignInError extends Error {},
+}));
+
+jest.mock("../../auth/supabase-client", () => ({
+  getMobileSupabaseClient: () => ({
+    auth: {
+      getSession: jest.fn().mockResolvedValue({ data: { session: null } }),
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+      signOut: jest.fn(),
+    },
+  }),
+}));
+
 jest.mock("react-native-webview", () => ({
   WebView: ({
     onError,
