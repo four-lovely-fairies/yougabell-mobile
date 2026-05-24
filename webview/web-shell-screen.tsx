@@ -78,6 +78,7 @@ export function WebShellScreen() {
       case "REQUEST_NATIVE_GOOGLE_SIGN_IN":
         try {
           await signInWithGoogleInBrowser();
+          await syncSessionToWebView();
         } catch (error) {
           if (error instanceof NativeGoogleSignInCancelledError) {
             webViewRef.current?.injectJavaScript(
@@ -104,6 +105,7 @@ export function WebShellScreen() {
       case "REQUEST_NATIVE_APPLE_SIGN_IN":
         try {
           await signInWithApple();
+          await syncSessionToWebView();
         } catch (error) {
           if (error instanceof NativeAppleSignInCancelledError) {
             webViewRef.current?.injectJavaScript(
