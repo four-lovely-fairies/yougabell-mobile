@@ -58,13 +58,13 @@ export function parseWebToNativeMessage(rawMessage: string): WebToNativeMessage 
 }
 
 export function buildNativeMessageScript(message: NativeToWebMessage) {
-  const encodedMessage = JSON.stringify(JSON.stringify(message));
+  const encodedMessage = JSON.stringify(message);
 
   return `
     window.__YOUGABELL_NATIVE__ = true;
     window.dispatchEvent(
       new CustomEvent(${JSON.stringify(NATIVE_WEBVIEW_EVENT_NAME)}, {
-        detail: JSON.parse(${encodedMessage}),
+        detail: ${encodedMessage},
       }),
     );
     true;
