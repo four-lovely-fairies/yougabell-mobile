@@ -49,4 +49,14 @@ describe("webview bridge helpers", () => {
     expect(script).toContain("access-token");
     expect(script).toContain("refresh-token");
   });
+
+  it("builds a dispatch script for push permission result", () => {
+    const script = buildNativeMessageScript({
+      type: "NATIVE_PUSH_PERMISSION_RESULT",
+      payload: { permission: "denied" },
+    });
+
+    expect(script).toContain("NATIVE_PUSH_PERMISSION_RESULT");
+    expect(script).toContain("denied");
+  });
 });

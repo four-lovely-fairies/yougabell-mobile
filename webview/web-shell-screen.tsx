@@ -15,6 +15,7 @@ import {
 } from "../auth/google-sign-in";
 import { getMobileSupabaseClient } from "../auth/supabase-client";
 
+import { requestPushPermission } from "./push-permission";
 import { useWebviewSource } from "./use-webview-source";
 import {
   buildNativeMessageScript,
@@ -133,6 +134,13 @@ export function WebShellScreen() {
         await getMobileSupabaseClient().auth.signOut();
         return;
       case "REQUEST_PUSH_PERMISSION":
+        webViewRef.current?.injectJavaScript(
+          buildNativeMessageScript({
+            type: "NATIVE_PUSH_PERMISSION_RESULT",
+            payload: { permission: await requestPushPermission() },
+          }),
+        );
+        return;
       case "ONBOARDING_COMPLETE":
         return;
       default:
