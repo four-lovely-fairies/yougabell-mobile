@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { resolveWebviewUrl } from "../webview-source";
+import { buildWebviewStartUrl, resolveWebviewUrl } from "../webview-source";
 
 describe("resolveWebviewUrl", () => {
   it("개발 오버라이드가 켜진 development build에서는 override URL을 우선 사용한다", () => {
@@ -34,5 +34,14 @@ describe("resolveWebviewUrl", () => {
     });
 
     expect(result).toBe("https://web.yougabell.com");
+  });
+
+  it("mobile bootstrap 시작 경로를 base URL에 붙인다", () => {
+    expect(
+      buildWebviewStartUrl(
+        "https://web.yougabell.com",
+        "/mobile-entry",
+      ),
+    ).toBe("https://web.yougabell.com/mobile-entry");
   });
 });

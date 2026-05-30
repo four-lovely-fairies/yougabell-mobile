@@ -7,6 +7,8 @@ export type WebToNativeMessage =
   | { type: "REQUEST_NATIVE_GOOGLE_SIGN_IN" }
   | { type: "REQUEST_NATIVE_APPLE_SIGN_IN" }
   | { type: "REQUEST_PUSH_PERMISSION" }
+  | { type: "REQUEST_PUSH_PERMISSION_STATUS" }
+  | { type: "OPEN_SYSTEM_NOTIFICATION_SETTINGS" }
   | { type: "ONBOARDING_COMPLETE"; payload: { userId: string } }
   | { type: "LOGOUT" };
 
@@ -19,7 +21,15 @@ export type NativeToWebMessage =
   | { type: "NATIVE_GOOGLE_SIGN_IN_CANCELLED" }
   | { type: "NATIVE_GOOGLE_SIGN_IN_ERROR"; payload: { message: string } }
   | { type: "NATIVE_APPLE_SIGN_IN_CANCELLED" }
-  | { type: "NATIVE_APPLE_SIGN_IN_ERROR"; payload: { message: string } };
+  | { type: "NATIVE_APPLE_SIGN_IN_ERROR"; payload: { message: string } }
+  | {
+      type: "NATIVE_PUSH_PERMISSION_RESULT";
+      payload: { permission: "granted" | "denied" };
+    }
+  | {
+      type: "NATIVE_PUSH_PERMISSION_STATUS";
+      payload: { permission: "granted" | "denied" };
+    };
 
 export function buildWebViewBootstrapScript() {
   return "window.__YOUGABELL_NATIVE__ = true; true;";
@@ -38,6 +48,8 @@ export function parseWebToNativeMessage(rawMessage: string): WebToNativeMessage 
       case "REQUEST_NATIVE_GOOGLE_SIGN_IN":
       case "REQUEST_NATIVE_APPLE_SIGN_IN":
       case "REQUEST_PUSH_PERMISSION":
+      case "REQUEST_PUSH_PERMISSION_STATUS":
+      case "OPEN_SYSTEM_NOTIFICATION_SETTINGS":
       case "LOGOUT":
         return parsed as WebToNativeMessage;
       case "ONBOARDING_COMPLETE":

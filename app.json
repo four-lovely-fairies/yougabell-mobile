@@ -19,6 +19,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.POST_NOTIFICATIONS"],
       "package": "com.sayojeong.yougabellmobile"
     },
     "web": {
@@ -28,6 +29,7 @@
     "plugins": [
       "expo-router",
       "expo-apple-authentication",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {

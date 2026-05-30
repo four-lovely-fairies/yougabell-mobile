@@ -33,6 +33,10 @@ jest.mock("../../auth/supabase-client", () => ({
   }),
 }));
 
+jest.mock("../push-permission", () => ({
+  requestPushPermission: jest.fn().mockResolvedValue("granted"),
+}));
+
 jest.mock("react-native-webview", () => ({
   WebView: ({
     onError,
