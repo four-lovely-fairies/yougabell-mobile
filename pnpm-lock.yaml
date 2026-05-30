@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@supabase/supabase-js':
+    hash: 55f0c293f733e0c9a856e8c9ad132d5a0163a7a8f814a06a4296948378061655
+    path: patches/@supabase__supabase-js.patch
+
 importers:
 
   .:
@@ -22,7 +27,7 @@ importers:
         version: 7.2.2(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
       '@supabase/supabase-js':
         specifier: ^2.106.1
-        version: 2.106.1
+        version: 2.106.1(patch_hash=55f0c293f733e0c9a856e8c9ad132d5a0163a7a8f814a06a4296948378061655)
       expo:
         specifier: ~54.0.33
         version: 54.0.34(@babel/core@7.29.0)(@expo/metro-runtime@6.1.2)(expo-router@6.0.23)(graphql@16.8.1)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
@@ -7922,7 +7927,7 @@ snapshots:
       iceberg-js: 0.8.1
       tslib: 2.8.1
 
-  '@supabase/supabase-js@2.106.1':
+  '@supabase/supabase-js@2.106.1(patch_hash=55f0c293f733e0c9a856e8c9ad132d5a0163a7a8f814a06a4296948378061655)':
     dependencies:
       '@supabase/auth-js': 2.106.1
       '@supabase/functions-js': 2.106.1
