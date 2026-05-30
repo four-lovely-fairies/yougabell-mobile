@@ -43,6 +43,11 @@ app-example
 /ios
 /android
 
+# EAS local build artifacts
+build-*.tar.gz
+*.ipa
+*.app
+
 # --- Project additions ---
 .idea
 .pnpm-store

@@ -1,1 +1,3 @@
 nodeLinker: hoisted
+patchedDependencies:
+  '@supabase/supabase-js': patches/@supabase__supabase-js.patch
