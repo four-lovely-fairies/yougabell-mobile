@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "bundleIdentifier": "com.sayojeong.yougabell"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.sayojeong.yougabellmobile"
+      "package": "com.sayojeong.yougabell"
     },
     "web": {
       "output": "static",
