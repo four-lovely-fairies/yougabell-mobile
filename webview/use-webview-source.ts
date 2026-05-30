@@ -1,15 +1,16 @@
 import { devWebConfig } from "./dev-web-config";
-import { resolveWebviewUrl } from "./webview-source";
+import { buildWebviewStartUrl, resolveWebviewUrl } from "./webview-source";
 
 export function useWebviewSource() {
   const defaultUrl = process.env.EXPO_PUBLIC_WEB_URL ?? "";
+  const baseUrl = resolveWebviewUrl({
+    defaultUrl,
+    isDev: __DEV__,
+    overrideEnabled: devWebConfig.enabled,
+    overrideUrl: devWebConfig.url,
+  });
 
   return {
-    uri: resolveWebviewUrl({
-      defaultUrl,
-      isDev: __DEV__,
-      overrideEnabled: devWebConfig.enabled,
-      overrideUrl: devWebConfig.url,
-    }),
+    uri: buildWebviewStartUrl(baseUrl, "/mobile-entry"),
   };
 }
