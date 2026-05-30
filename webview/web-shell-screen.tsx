@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import type { WebViewMessageEvent } from "react-native-webview";
 import { WebView } from "react-native-webview";
 
@@ -15,7 +15,10 @@ import {
 } from "../auth/google-sign-in";
 import { getMobileSupabaseClient } from "../auth/supabase-client";
 
-import { requestPushPermission } from "./push-permission";
+import {
+  getPushPermissionStatus,
+  requestPushPermission,
+} from "./push-permission";
 import { useWebviewSource } from "./use-webview-source";
 import {
   buildNativeMessageScript,
@@ -134,12 +137,43 @@ export function WebShellScreen() {
         await getMobileSupabaseClient().auth.signOut();
         return;
       case "REQUEST_PUSH_PERMISSION":
-        webViewRef.current?.injectJavaScript(
-          buildNativeMessageScript({
-            type: "NATIVE_PUSH_PERMISSION_RESULT",
-            payload: { permission: await requestPushPermission() },
-          }),
-        );
+        try {
+          const permission = await requestPushPermission();
+          webViewRef.current?.injectJavaScript(
+            buildNativeMessageScript({
+              type: "NATIVE_PUSH_PERMISSION_RESULT",
+              payload: { permission },
+            }),
+          );
+        } catch {
+          webViewRef.current?.injectJavaScript(
+            buildNativeMessageScript({
+              type: "NATIVE_PUSH_PERMISSION_RESULT",
+              payload: { permission: "denied" },
+            }),
+          );
+        }
+        return;
+      case "REQUEST_PUSH_PERMISSION_STATUS":
+        try {
+          const permission = await getPushPermissionStatus();
+          webViewRef.current?.injectJavaScript(
+            buildNativeMessageScript({
+              type: "NATIVE_PUSH_PERMISSION_STATUS",
+              payload: { permission },
+            }),
+          );
+        } catch {
+          webViewRef.current?.injectJavaScript(
+            buildNativeMessageScript({
+              type: "NATIVE_PUSH_PERMISSION_STATUS",
+              payload: { permission: "denied" },
+            }),
+          );
+        }
+        return;
+      case "OPEN_SYSTEM_NOTIFICATION_SETTINGS":
+        await Linking.openSettings();
         return;
       case "ONBOARDING_COMPLETE":
         return;

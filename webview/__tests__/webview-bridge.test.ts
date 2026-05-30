@@ -59,4 +59,12 @@ describe("webview bridge helpers", () => {
     expect(script).toContain("NATIVE_PUSH_PERMISSION_RESULT");
     expect(script).toContain("denied");
   });
+
+  it("parses a push permission status request", () => {
+    expect(
+      parseWebToNativeMessage(
+        JSON.stringify({ type: "REQUEST_PUSH_PERMISSION_STATUS" }),
+      ),
+    ).toEqual({ type: "REQUEST_PUSH_PERMISSION_STATUS" });
+  });
 });
