@@ -1,6 +1,5 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { makeRedirectUri } from "expo-auth-session";
-import * as Crypto from "expo-crypto";
 import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 
@@ -92,13 +91,16 @@ async function signInWithAppleOnIos() {
   const isAvailable = await AppleAuthentication.isAvailableAsync();
 
   if (!isAvailable) {
-    throw new NativeAppleSignInError();
+    throw new NativeAppleSignInError(
+      "이 기기에서 Apple 로그인을 사용할 수 없습니다. 시뮬레이터라면 Settings에서 Apple ID로 로그인했는지 확인해 주세요.",
+    );
   }
 
   try {
-    const nonce = Crypto.randomUUID();
+    // nonce는 전달하지 않는다. expo-apple-authentication는 nonce를 그대로 Apple에
+    // 넘기지만 토큰에는 해시된 값이 담겨 Supabase의 signInWithIdToken과 불일치할 수
+    // 있다. Supabase 공식 Expo 가이드도 nonce를 쓰지 않으므로 생략한다.
     const credential = await AppleAuthentication.signInAsync({
-      nonce,
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         AppleAuthentication.AppleAuthenticationScope.EMAIL,
@@ -106,18 +108,22 @@ async function signInWithAppleOnIos() {
     });
 
     if (!credential.identityToken) {
-      throw new NativeAppleSignInError();
+      throw new NativeAppleSignInError(
+        "Apple identityToken을 받지 못했습니다.",
+      );
     }
 
-    const { data, error } = await getMobileSupabaseClient().auth.signInWithIdToken({
-      provider: "apple",
-      token: credential.identityToken,
-      nonce,
-      access_token: credential.authorizationCode ?? undefined,
-    });
+    const { data, error } =
+      await getMobileSupabaseClient().auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+      });
 
     if (error || !data.session) {
-      throw new NativeAppleSignInError();
+      throw new NativeAppleSignInError(
+        error?.message ??
+          "Supabase가 Apple 토큰을 거부했습니다. Apple provider의 authorized client ID에 bundle ID가 등록됐는지 확인해 주세요.",
+      );
     }
 
     const givenName = credential.fullName?.givenName?.trim();
@@ -149,7 +155,14 @@ async function signInWithAppleOnIos() {
       throw error;
     }
 
-    throw new NativeAppleSignInError();
+    const detail =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && "code" in error
+          ? String((error as { code: unknown }).code)
+          : String(error);
+
+    throw new NativeAppleSignInError(`Apple 로그인 실패: ${detail}`);
   }
 }
 
