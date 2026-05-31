@@ -94,7 +94,10 @@ export const secureStoreAdapter: SupportedStorage = {
     ]);
   },
   async removeItem(key) {
-    await Promise.all([SecureStore.deleteItemAsync(key), removeChunkedValue(key)]);
+    await Promise.all([
+      SecureStore.deleteItemAsync(key),
+      removeChunkedValue(key),
+    ]);
   },
 };
 
@@ -118,6 +121,29 @@ function requireSupabasePublishableKey() {
   }
 
   return value;
+}
+
+/**
+ * Supabase 클라이언트 생성에 필요한 환경 변수가 빠졌는지 throw 없이 확인한다.
+ * 빠진 게 없으면 null, 있으면 사용자에게 보여줄 메시지를 반환한다.
+ * 앱 시작 시점에 createClient가 throw해 프로세스가 종료(SIGABRT)되는 것을 막기 위해 사용.
+ */
+export function getMobileSupabaseConfigError(): string | null {
+  const missing: string[] = [];
+
+  if (!process.env.EXPO_PUBLIC_SUPABASE_URL) {
+    missing.push("EXPO_PUBLIC_SUPABASE_URL");
+  }
+
+  if (!process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+    missing.push("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  }
+
+  if (missing.length === 0) {
+    return null;
+  }
+
+  return `필수 환경 변수가 빌드에 포함되지 않았습니다: ${missing.join(", ")}`;
 }
 
 let mobileSupabaseClient: ReturnType<typeof createClient> | undefined;
