@@ -30,6 +30,10 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./sayojeong-0c9603409e39.json"
+      }
+    }
   }
 }

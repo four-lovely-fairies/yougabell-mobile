@@ -34,6 +34,11 @@ yarn-error.*
 .env
 .env*.local
 
+# Google Play service account key (절대 커밋 금지)
+sayojeong-*.json
+*-service-account*.json
+*.iam.gserviceaccount.com.json
+
 # typescript
 *.tsbuildinfo
 
