@@ -13,7 +13,10 @@ import {
   NativeGoogleSignInError,
   signInWithGoogleInBrowser,
 } from "../auth/google-sign-in";
-import { getMobileSupabaseClient } from "../auth/supabase-client";
+import {
+  getMobileSupabaseClient,
+  getMobileSupabaseConfigError,
+} from "../auth/supabase-client";
 
 import {
   getPushPermissionStatus,
@@ -35,6 +38,7 @@ export function WebShellScreen() {
   const [phase, setPhase] = useState<WebShellPhase>("loading");
   const [reloadKey, setReloadKey] = useState(0);
   const webViewRef = useRef<WebView>(null);
+  const configError = getMobileSupabaseConfigError();
 
   const handleRetry = () => {
     setPhase("loading");
@@ -59,6 +63,10 @@ export function WebShellScreen() {
   }
 
   useEffect(() => {
+    if (configError) {
+      return;
+    }
+
     const {
       data: { subscription },
     } = getMobileSupabaseClient().auth.onAuthStateChange(() => {
@@ -68,7 +76,7 @@ export function WebShellScreen() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [configError]);
 
   const handleWebMessage = async (event: WebViewMessageEvent) => {
     const message = parseWebToNativeMessage(event.nativeEvent.data);
@@ -181,6 +189,17 @@ export function WebShellScreen() {
         return;
     }
   };
+
+  if (configError) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.overlay}>
+          <Text style={styles.title}>앱 설정을 불러오지 못했어요</Text>
+          <Text style={styles.body}>{configError}</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

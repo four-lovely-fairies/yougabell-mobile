@@ -22,6 +22,7 @@ jest.mock("../../auth/apple-sign-in", () => ({
 }));
 
 jest.mock("../../auth/supabase-client", () => ({
+  getMobileSupabaseConfigError: () => null,
   getMobileSupabaseClient: () => ({
     auth: {
       getSession: jest.fn().mockResolvedValue({ data: { session: null } }),
