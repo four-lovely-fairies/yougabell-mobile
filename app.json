@@ -14,7 +14,8 @@
       "bundleIdentifier": "com.sayojeong.yougabell",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,8 +24,11 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.POST_NOTIFICATIONS"],
-      "package": "com.sayojeong.yougabell"
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "package": "com.sayojeong.yougabell",
+      "versionCode": 3
     },
     "web": {
       "output": "static",
