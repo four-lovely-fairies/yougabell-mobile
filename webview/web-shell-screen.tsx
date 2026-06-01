@@ -183,6 +183,10 @@ export function WebShellScreen() {
       case "OPEN_SYSTEM_NOTIFICATION_SETTINGS":
         await Linking.openSettings();
         return;
+      case "OPEN_EXTERNAL_URL":
+        // 처리방침·약관 등 외부 페이지를 시스템 브라우저로 열어 WebView에 갇히지 않게 한다.
+        await Linking.openURL(message.payload.url);
+        return;
       case "ONBOARDING_COMPLETE":
         return;
       default:
