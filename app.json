@@ -2,7 +2,7 @@
   "expo": {
     "name": "yougabell",
     "slug": "yougabell-mobile",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "yougabell",
@@ -24,9 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.POST_NOTIFICATIONS"
-      ],
+      "permissions": ["android.permission.POST_NOTIFICATIONS"],
       "package": "com.sayojeong.yougabell",
       "versionCode": 3
     },
