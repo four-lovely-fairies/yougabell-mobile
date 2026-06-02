@@ -9,6 +9,7 @@ export type WebToNativeMessage =
   | { type: "REQUEST_PUSH_PERMISSION" }
   | { type: "REQUEST_PUSH_PERMISSION_STATUS" }
   | { type: "OPEN_SYSTEM_NOTIFICATION_SETTINGS" }
+  | { type: "OPEN_EXTERNAL_URL"; payload: { url: string } }
   | { type: "ONBOARDING_COMPLETE"; payload: { userId: string } }
   | { type: "LOGOUT" };
 
@@ -35,7 +36,9 @@ export function buildWebViewBootstrapScript() {
   return "window.__YOUGABELL_NATIVE__ = true; true;";
 }
 
-export function parseWebToNativeMessage(rawMessage: string): WebToNativeMessage | null {
+export function parseWebToNativeMessage(
+  rawMessage: string,
+): WebToNativeMessage | null {
   try {
     const parsed = JSON.parse(rawMessage) as Partial<WebToNativeMessage> | null;
 
@@ -57,6 +60,15 @@ export function parseWebToNativeMessage(rawMessage: string): WebToNativeMessage 
           parsed.payload &&
           typeof parsed.payload === "object" &&
           typeof parsed.payload.userId === "string"
+        ) {
+          return parsed as WebToNativeMessage;
+        }
+        return null;
+      case "OPEN_EXTERNAL_URL":
+        if (
+          parsed.payload &&
+          typeof parsed.payload === "object" &&
+          typeof (parsed.payload as { url?: unknown }).url === "string"
         ) {
           return parsed as WebToNativeMessage;
         }
