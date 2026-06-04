@@ -223,8 +223,8 @@ export function WebShellScreen() {
 
       {phase === "loading" ? (
         <View pointerEvents="none" style={styles.overlay}>
-          <Text style={styles.title}>육아밸을 불러오는 중이에요</Text>
-          <Text style={styles.body}>앱 안에서 웹 화면을 준비하고 있어요.</Text>
+          <Text style={styles.title}>육아밸을 준비하고 있어요</Text>
+          <Text style={styles.body}>잠시만 기다려 주세요</Text>
         </View>
       ) : null}
 

@@ -67,7 +67,7 @@ describe("WebShellScreen", () => {
   it("초기에는 로딩 문구를 보여준다", () => {
     render(<WebShellScreen />);
 
-    expect(screen.getByText("육아밸을 불러오는 중이에요")).toBeTruthy();
+    expect(screen.getByText("육아밸을 준비하고 있어요")).toBeTruthy();
   });
 
   it("에러 발생 시 다시 시도 버튼을 보여준다", () => {
