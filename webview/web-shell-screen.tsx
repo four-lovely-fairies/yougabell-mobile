@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import type { WebViewMessageEvent } from "react-native-webview";
 import { WebView } from "react-native-webview";
 
@@ -222,10 +223,18 @@ export function WebShellScreen() {
       />
 
       {phase === "loading" ? (
-        <View pointerEvents="none" style={styles.overlay}>
+        // 웹 앱 배경(bg-linear-to-br #f1eaff→#e8eeff→#dff4ff)과 동일한 그라데이션 →
+        // WebView가 뜨면 스플래시에서 본문으로 자연스럽게 이어진다.
+        <LinearGradient
+          pointerEvents="none"
+          colors={["#f1eaff", "#e8eeff", "#dff4ff"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.overlay}
+        >
           <Text style={styles.title}>육아밸을 준비하고 있어요</Text>
           <Text style={styles.body}>잠시만 기다려 주세요</Text>
-        </View>
+        </LinearGradient>
       ) : null}
 
       {phase === "error" ? (
