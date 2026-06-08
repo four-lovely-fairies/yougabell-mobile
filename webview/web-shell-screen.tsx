@@ -46,6 +46,11 @@ export function WebShellScreen() {
     setReloadKey((current) => current + 1);
   };
 
+  const reloadWebEntry = () => {
+    setPhase("loading");
+    setReloadKey((current) => current + 1);
+  };
+
   async function syncSessionToWebView() {
     const { data } = await getMobileSupabaseClient().auth.getSession();
 
@@ -91,7 +96,7 @@ export function WebShellScreen() {
       case "REQUEST_NATIVE_GOOGLE_SIGN_IN":
         try {
           await signInWithGoogleInBrowser();
-          await syncSessionToWebView();
+          reloadWebEntry();
         } catch (error) {
           if (error instanceof NativeGoogleSignInCancelledError) {
             webViewRef.current?.injectJavaScript(
@@ -118,7 +123,7 @@ export function WebShellScreen() {
       case "REQUEST_NATIVE_APPLE_SIGN_IN":
         try {
           await signInWithApple();
-          await syncSessionToWebView();
+          reloadWebEntry();
         } catch (error) {
           if (error instanceof NativeAppleSignInCancelledError) {
             webViewRef.current?.injectJavaScript(
