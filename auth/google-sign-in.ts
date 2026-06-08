@@ -50,13 +50,26 @@ export async function signInWithGoogleInBrowser() {
     );
   }
 
+  console.log("[google-sign-in] redirectTo", redirectTo);
+  console.log("[google-sign-in] authUrl", data.url);
+
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
+  console.log("[google-sign-in] browser result", JSON.stringify(result));
+
   if (result.type !== "success" || !result.url) {
-    throw new NativeGoogleSignInCancelledError();
+    if (result.type === "cancel") {
+      throw new NativeGoogleSignInCancelledError();
+    }
+
+    throw new NativeGoogleSignInError(
+      `Google OAuth 결과를 처리하지 못했습니다. type=${result.type} url=${"url" in result ? (result.url ?? "none") : "none"}`,
+    );
   }
 
   const callback = parseOAuthCallback(result.url);
+
+  console.log("[google-sign-in] callback", JSON.stringify(callback));
 
   if (callback.kind === "session") {
     const { data: sessionData, error: setSessionError } =
@@ -71,6 +84,7 @@ export async function signInWithGoogleInBrowser() {
       );
     }
 
+    console.log("[google-sign-in] setSession success");
     return sessionData.session;
   }
 
@@ -85,9 +99,11 @@ export async function signInWithGoogleInBrowser() {
 
   if (exchangeError || !sessionData.session) {
     throw new NativeGoogleSignInError(
-      exchangeError?.message ?? "Supabase 세션 교환에 실패했습니다.",
+      exchangeError?.message ??
+        `Supabase 세션 교환에 실패했습니다. code=${callback.code.slice(0, 12)}...`,
     );
   }
 
+  console.log("[google-sign-in] exchangeCodeForSession success");
   return sessionData.session;
 }
