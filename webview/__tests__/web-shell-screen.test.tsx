@@ -1,4 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native";
 import React from "react";
 
 import { WebShellScreen } from "../web-shell-screen";
@@ -64,14 +69,20 @@ jest.mock("react-native-webview", () => ({
 }));
 
 describe("WebShellScreen", () => {
-  it("초기에는 로딩 문구를 보여준다", () => {
+  it("초기에는 로딩 문구를 보여준다", async () => {
     render(<WebShellScreen />);
 
-    expect(screen.getByText("육아밸을 준비하고 있어요")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("육아밸을 준비하고 있어요")).toBeTruthy();
+    });
   });
 
-  it("에러 발생 시 다시 시도 버튼을 보여준다", () => {
+  it("에러 발생 시 다시 시도 버튼을 보여준다", async () => {
     render(<WebShellScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("webview-shell")).toBeTruthy();
+    });
 
     fireEvent.press(screen.getByTestId("webview-shell"));
 

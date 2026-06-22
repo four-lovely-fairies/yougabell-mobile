@@ -1,7 +1,7 @@
 import { devWebConfig } from "./dev-web-config";
 import { buildWebviewStartUrl, resolveWebviewUrl } from "./webview-source";
 
-export function useWebviewSource() {
+export function useWebviewSource(pathname = "/mobile-entry") {
   const defaultUrl = process.env.EXPO_PUBLIC_WEB_URL ?? "";
   const baseUrl = resolveWebviewUrl({
     defaultUrl,
@@ -11,6 +11,6 @@ export function useWebviewSource() {
   });
 
   return {
-    uri: buildWebviewStartUrl(baseUrl, "/mobile-entry"),
+    uri: buildWebviewStartUrl(baseUrl, pathname),
   };
 }

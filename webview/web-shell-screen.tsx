@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -35,23 +35,31 @@ import { webShellStyles as styles } from "./web-shell-styles";
 type WebShellPhase = "loading" | "ready" | "error";
 
 export function WebShellScreen() {
-  const source = useWebviewSource();
   const [phase, setPhase] = useState<WebShellPhase>("loading");
   const [reloadKey, setReloadKey] = useState(0);
+  const [startPath, setStartPath] = useState<string | null>(null);
+  const source = useWebviewSource(startPath ?? "/mobile-entry");
   const webViewRef = useRef<WebView>(null);
   const configError = getMobileSupabaseConfigError();
 
-  const handleRetry = () => {
+  const resolveInitialPath = useCallback(async () => {
+    const { data } = await getMobileSupabaseClient().auth.getSession();
+    return data.session ? "/mobile-entry" : "/onboarding/intro";
+  }, []);
+
+  const handleRetry = async () => {
     setPhase("loading");
+    setStartPath(await resolveInitialPath());
     setReloadKey((current) => current + 1);
   };
 
-  const reloadWebEntry = () => {
+  const reloadWebEntry = async () => {
     setPhase("loading");
+    setStartPath(await resolveInitialPath());
     setReloadKey((current) => current + 1);
   };
 
-  async function syncSessionToWebView() {
+  const syncSessionToWebView = useCallback(async () => {
     const { data } = await getMobileSupabaseClient().auth.getSession();
 
     if (!webViewRef.current) return;
@@ -66,7 +74,29 @@ export function WebShellScreen() {
     webViewRef.current.injectJavaScript(
       buildNativeMessageScript(buildSessionSyncMessage(data.session)),
     );
-  }
+  }, []);
+
+  useEffect(() => {
+    if (configError) {
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      const initialPath = await resolveInitialPath();
+
+      if (!active) {
+        return;
+      }
+
+      setStartPath(initialPath);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [configError, resolveInitialPath]);
 
   useEffect(() => {
     if (configError) {
@@ -82,7 +112,7 @@ export function WebShellScreen() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [configError]);
+  }, [configError, syncSessionToWebView]);
 
   const handleWebMessage = async (event: WebViewMessageEvent) => {
     const message = parseWebToNativeMessage(event.nativeEvent.data);
@@ -96,7 +126,7 @@ export function WebShellScreen() {
       case "REQUEST_NATIVE_GOOGLE_SIGN_IN":
         try {
           await signInWithGoogleInBrowser();
-          reloadWebEntry();
+          await reloadWebEntry();
         } catch (error) {
           if (error instanceof NativeGoogleSignInCancelledError) {
             webViewRef.current?.injectJavaScript(
@@ -123,7 +153,7 @@ export function WebShellScreen() {
       case "REQUEST_NATIVE_APPLE_SIGN_IN":
         try {
           await signInWithApple();
-          reloadWebEntry();
+          await reloadWebEntry();
         } catch (error) {
           if (error instanceof NativeAppleSignInCancelledError) {
             webViewRef.current?.injectJavaScript(
@@ -149,6 +179,7 @@ export function WebShellScreen() {
         return;
       case "LOGOUT":
         await getMobileSupabaseClient().auth.signOut();
+        setStartPath("/onboarding/intro");
         return;
       case "REQUEST_PUSH_PERMISSION":
         try {
@@ -213,21 +244,23 @@ export function WebShellScreen() {
 
   return (
     <View style={styles.container}>
-      <WebView
-        key={reloadKey}
-        ref={webViewRef}
-        testID="webview-shell"
-        source={source}
-        style={styles.webview}
-        injectedJavaScriptBeforeContentLoaded={buildWebViewBootstrapScript()}
-        onLoadEnd={() => setPhase("ready")}
-        onError={() => setPhase("error")}
-        onMessage={(event) => {
-          void handleWebMessage(event);
-        }}
-      />
+      {startPath ? (
+        <WebView
+          key={reloadKey}
+          ref={webViewRef}
+          testID="webview-shell"
+          source={source}
+          style={styles.webview}
+          injectedJavaScriptBeforeContentLoaded={buildWebViewBootstrapScript()}
+          onLoadEnd={() => setPhase("ready")}
+          onError={() => setPhase("error")}
+          onMessage={(event) => {
+            void handleWebMessage(event);
+          }}
+        />
+      ) : null}
 
-      {phase === "loading" ? (
+      {phase === "loading" || !startPath ? (
         // 웹 앱 배경(bg-linear-to-br #f1eaff→#e8eeff→#dff4ff)과 동일한 그라데이션 →
         // WebView가 뜨면 스플래시에서 본문으로 자연스럽게 이어진다.
         <LinearGradient
