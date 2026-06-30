@@ -40,6 +40,9 @@ pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레
 - **WebView ↔ Native 통신**: `postMessage` 프로토콜은 `webview/webview-bridge.ts`를 단일 진실로 사용.
 - **Google OAuth**: WebView 안에서 직접 시작하지 않는다. mobile이 외부 보안 브라우저 OAuth를 수행하고 WebView 세션을 동기화한다.
 - **Apple OAuth**: iOS는 `expo-apple-authentication` 기반 native 로그인, Android는 외부 보안 브라우저 OAuth를 사용한다.
+- **OAuth 콜백은 `auth/open-oauth-session.ts`의 `openOAuthSession`으로만 연다** (Google·Apple Android 공통). 직접 `WebBrowser.openAuthSessionAsync`만 쓰지 않는다.
+  - **Android 딥링크 함정**: `app.json`의 `scheme: "yougabell"` + `app/auth/callback.tsx` 라우트 때문에 Android에 `yougabell://auth/callback` 딥링크 intent-filter가 자동 등록된다. Supabase가 이 커스텀 스킴으로 302 리다이렉트하면 Android 딥링크가 URL을 먼저 가로채 앱을 foreground로 띄우고 Chrome Custom Tab은 dismiss된다. 그 결과 `openAuthSessionAsync`는 `{ type: "dismiss" }`만 반환하고 인증 `code`는 WebBrowser 결과가 아니라 `Linking` 딥링크로 도착한다 → 처리 누락 시 **Android만 가입/로그인 실패**(증상: `type=dismiss url=none`).
+  - **해결**: `openOAuthSession`이 WebBrowser `success`와 `Linking` 딥링크 두 경로를 함께 기다려 먼저 도착하는 콜백 URL을 쓴다. iOS의 `ASWebAuthenticationSession`은 스킴을 내부에서 가로채 `success`를 반환하므로 이 우회가 필요 없다.
 - **컴포넌트 파일명**: kebab-case (`webview-bridge.tsx`).
 
 ## 디렉토리 (src 없는 형식, expo-router 기준)
@@ -78,4 +81,29 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 
 ## 배포
 
-EAS Build → TestFlight / Google Play Internal → 스토어.
+기본 흐름: **EAS Build → 스토어 제출(submit) → 사용자 스토어 업데이트**. JS-only 수정은 **EAS Update(OTA)**로 스토어 심사 없이 즉시 배포 가능.
+
+### 버전 체계
+
+- `app.json`의 `version`(versionName)은 사용자 표시 버전. 새 릴리즈마다 손으로 올린다 (예: `1.0.1` → `1.0.2`).
+- `android.versionCode` / `ios.buildNumber`는 직접 만지지 않는다 — `eas.json` production 프로파일의 `autoIncrement: true`가 빌드 시 자동 증가시키고, `appVersionSource: "local"`이라 결과가 `app.json`에 기록되므로 **빌드 후 그 변경을 커밋해 동기화**한다.
+- `runtimeVersion`은 `{ policy: "appVersion" }` — OTA 업데이트는 **동일 `version`을 가진 빌드에만** 적용된다. `version`을 올리면 그 빌드부터는 새 OTA 채널 대상이 된다.
+
+### 빌드 · 제출
+
+```bash
+eas build  --platform android --profile production --non-interactive --no-wait   # 빌드 큐잉(.aab)
+eas submit --platform android --profile production --id <buildId> --non-interactive
+```
+
+- `eas.json`의 `submit.production.android`는 서비스 계정 키(`./sayojeong-...json`)로 업로드. **`track` 미지정 시 기본값은 `internal`** → 실사용자에게 가려면 `"track": "production"` 지정 또는 Play Console에서 프로덕션 승격 필요.
+- Android 자격증명(keystore)·환경변수(`EXPO_PUBLIC_*`)는 EAS 원격에 설정돼 있다.
+
+### EAS Update (OTA)
+
+- `expo-updates` + `eas update:configure`로 셋업됨. `app.json`에 `updates.url`, `eas.json` 프로파일별 `channel`(production/preview/development) 지정.
+- 네이티브 변경(새 라이브러리, app.json 네이티브 설정, SDK 업)이 **없는** JS/TS 수정은:
+  ```bash
+  eas update --branch production --message "<요약>"
+  ```
+  → 해당 채널·동일 runtimeVersion 빌드를 설치한 기기에 다음 실행 시 반영. 네이티브 변경이 있으면 OTA 불가 → 새 스토어 빌드 필요.
