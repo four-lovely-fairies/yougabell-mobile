@@ -39,7 +39,8 @@
         "ascAppId": "6773707307"
       },
       "android": {
-        "serviceAccountKeyPath": "./sayojeong-0c9603409e39.json"
+        "serviceAccountKeyPath": "./sayojeong-0c9603409e39.json",
+        "track": "production"
       }
     }
   }
