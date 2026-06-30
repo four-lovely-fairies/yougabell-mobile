@@ -24,9 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.POST_NOTIFICATIONS"
-      ],
+      "permissions": ["android.permission.POST_NOTIFICATIONS"],
       "package": "com.sayojeong.yougabell",
       "versionCode": 5
     },
@@ -60,6 +58,12 @@
       "eas": {
         "projectId": "9799d873-0611-40c3-a6df-a1c918afa0a3"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9799d873-0611-40c3-a6df-a1c918afa0a3"
     }
   }
 }
