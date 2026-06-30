@@ -3,6 +3,7 @@ import { makeRedirectUri } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 
+import { openOAuthSession } from "./open-oauth-session";
 import { parseOAuthCallback } from "./oauth-callback";
 import { getMobileSupabaseClient } from "./supabase-client";
 
@@ -47,13 +48,13 @@ async function signInWithAppleInBrowser() {
     throw new NativeAppleSignInError();
   }
 
-  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  const callbackUrl = await openOAuthSession(data.url, redirectTo);
 
-  if (result.type !== "success" || !result.url) {
+  if (!callbackUrl) {
     throw new NativeAppleSignInCancelledError();
   }
 
-  const callback = parseOAuthCallback(result.url);
+  const callback = parseOAuthCallback(callbackUrl);
 
   if (callback.kind === "session") {
     const { data: sessionData, error: setSessionError } =
