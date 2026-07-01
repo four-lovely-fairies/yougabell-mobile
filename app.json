@@ -26,7 +26,7 @@
       "predictiveBackGestureEnabled": false,
       "permissions": ["android.permission.POST_NOTIFICATIONS"],
       "package": "com.sayojeong.yougabell",
-      "versionCode": 7
+      "versionCode": 10
     },
     "web": {
       "output": "static",
