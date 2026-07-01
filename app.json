@@ -25,8 +25,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": ["android.permission.POST_NOTIFICATIONS"],
-      "package": "com.sayojeong.yougabell",
-      "versionCode": 11
+      "package": "com.sayojeong.yougabell"
     },
     "web": {
       "output": "static",
