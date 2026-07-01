@@ -86,7 +86,9 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 ### 버전 체계
 
 - `app.json`의 `version`(versionName)은 사용자 표시 버전. 새 릴리즈마다 손으로 올린다 (예: `1.0.1` → `1.0.2`).
-- `android.versionCode` / `ios.buildNumber`는 직접 만지지 않는다 — `eas.json` production 프로파일의 `autoIncrement: true`가 빌드 시 자동 증가시키고, `appVersionSource: "local"`이라 결과가 `app.json`에 기록되므로 **빌드 후 그 변경을 커밋해 동기화**한다.
+- **versionCode/buildNumber는 `appVersionSource: "remote"`로 EAS 서버가 중앙 관리한다.** `app.json`에는 `android.versionCode`를 두지 않는다(있어도 remote 소스에선 무시됨). `autoIncrement: true`가 빌드마다 remote 카운터를 증가시키므로 **빌드 후 app.json에 되쓰이는 값이 없어 동기화 커밋이 필요 없다.**
+  - 과거 `appVersionSource: "local"`일 때 git `app.json`의 versionCode가 스토어(Play Console) 실제 값보다 뒤처져(드리프트) 다운그레이드 제출 거부가 발생했다. remote로 전환해 재발을 막았다.
+  - remote 카운터 초기값·수동 조정은 `eas build:version:set --platform android`(대화형). 현재 값 확인은 `eas build:version:get --platform android`.
 - `runtimeVersion`은 `{ policy: "appVersion" }` — OTA 업데이트는 **동일 `version`을 가진 빌드에만** 적용된다. `version`을 올리면 그 빌드부터는 새 OTA 채널 대상이 된다.
 
 ### 빌드 · 제출
