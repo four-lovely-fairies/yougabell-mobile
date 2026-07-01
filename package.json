@@ -69,7 +69,7 @@
     "typescript": "~5.9.2"
   },
   "private": true,
-  "description": "육아밸 — RN shell (Expo, native APIs · push · WebView container)",
+  "description": "육아벨 — RN shell (Expo, native APIs · push · WebView container)",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=24"

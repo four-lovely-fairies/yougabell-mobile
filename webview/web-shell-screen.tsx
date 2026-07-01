@@ -1,6 +1,6 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import type { WebViewMessageEvent } from "react-native-webview";
 import { WebView } from "react-native-webview";
 
@@ -24,13 +24,13 @@ import {
   requestPushPermission,
 } from "./push-permission";
 import { useWebviewSource } from "./use-webview-source";
+import { webShellStyles as styles } from "./web-shell-styles";
 import {
   buildNativeMessageScript,
   buildSessionSyncMessage,
   buildWebViewBootstrapScript,
   parseWebToNativeMessage,
 } from "./webview-bridge";
-import { webShellStyles as styles } from "./web-shell-styles";
 
 type WebShellPhase = "loading" | "ready" | "error";
 
@@ -270,7 +270,7 @@ export function WebShellScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.overlay}
         >
-          <Text style={styles.title}>육아밸을 준비하고 있어요</Text>
+          <Text style={styles.title}>육아벨을 준비하고 있어요</Text>
           <Text style={styles.body}>잠시만 기다려 주세요</Text>
         </LinearGradient>
       ) : null}

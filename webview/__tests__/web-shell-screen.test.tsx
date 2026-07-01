@@ -73,7 +73,7 @@ describe("WebShellScreen", () => {
     render(<WebShellScreen />);
 
     await waitFor(() => {
-      expect(screen.getByText("육아밸을 준비하고 있어요")).toBeTruthy();
+      expect(screen.getByText("육아벨을 준비하고 있어요")).toBeTruthy();
     });
   });
 
