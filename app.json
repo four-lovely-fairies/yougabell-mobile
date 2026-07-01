@@ -14,8 +14,7 @@
       "bundleIdentifier": "com.sayojeong.yougabell",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      },
-      "buildNumber": "9"
+      }
     },
     "android": {
       "adaptiveIcon": {
