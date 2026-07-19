@@ -58,6 +58,22 @@ pnpm eas:build:android:dev    # 또는 :preview / :prod, ios도 동일
 
 `eas.json`에 development(내부 APK + dev client), preview(내부 APK), simulator(iOS), production(TestFlight/Play) 프로파일이 있다. production은 버전 코드를 자동 증가시킨다.
 
+### 푸시 알림 설정
+
+푸시는 Expo Push Service를 쓴다. 앱은 OS 권한이 승인되면
+`Notifications.getExpoPushTokenAsync({ projectId })`로 Expo push token을 받고,
+현재 Supabase access token으로 API의 `/notifications/push-tokens`에 등록한다.
+
+외부 콘솔 설정은 별도로 필요하다.
+
+- EAS 프로젝트 `9799d873-0611-40c3-a6df-a1c918afa0a3`에 Android FCM v1
+  credential을 연결한다.
+- iOS는 Apple Developer에서 Push Notifications capability와 APNs key를 준비하고
+  EAS credentials에 연결한다.
+- Expo push security를 켠 경우 API 운영 환경에 `EXPO_PUSH_ACCESS_TOKEN`을 설정한다.
+- Expo Go의 Android 원격 푸시는 SDK 53부터 지원되지 않으므로 development build나
+  store build에서 테스트한다.
+
 ## 스택
 
 Expo SDK 54 · React Native 0.81 · expo-router 6 · react-native-webview · Supabase Auth · TypeScript(strict) · pnpm · Node 24 LTS. EAS Build → TestFlight / Google Play Internal → 스토어.

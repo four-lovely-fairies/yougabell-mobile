@@ -8,6 +8,13 @@ import React from "react";
 
 import { WebShellScreen } from "../web-shell-screen";
 
+jest.mock("expo-notifications", () => ({
+  setNotificationHandler: jest.fn(),
+  addNotificationResponseReceivedListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+}));
+
 jest.mock("../use-webview-source", () => ({
   useWebviewSource: () => ({
     uri: "https://web.yougabell.com",
@@ -41,14 +48,17 @@ jest.mock("../../auth/supabase-client", () => ({
 
 jest.mock("../push-permission", () => ({
   requestPushPermission: jest.fn().mockResolvedValue("granted"),
+  requestPushPermissionAndRegister: jest.fn().mockResolvedValue("granted"),
 }));
 
 jest.mock("react-native-webview", () => ({
   WebView: ({
     onError,
+    onMessage,
     testID,
   }: {
     onError: (event: unknown) => void;
+    onMessage: (event: unknown) => void;
     testID: string;
   }) => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -62,6 +72,7 @@ jest.mock("react-native-webview", () => ({
         testID,
         onPress: () =>
           onError({ nativeEvent: { description: "network error" } }),
+        onMessage,
       },
       "Mock WebView",
     );
@@ -87,5 +98,29 @@ describe("WebShellScreen", () => {
     fireEvent.press(screen.getByTestId("webview-shell"));
 
     expect(screen.getByText("다시 시도")).toBeTruthy();
+  });
+
+  it("푸시 권한 요청 메시지를 받으면 권한 요청과 토큰 등록을 실행한다", async () => {
+    const { requestPushPermissionAndRegister } = jest.requireMock(
+      "../push-permission",
+    ) as {
+      requestPushPermissionAndRegister: jest.Mock;
+    };
+
+    render(<WebShellScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("webview-shell")).toBeTruthy();
+    });
+
+    fireEvent(screen.getByTestId("webview-shell"), "message", {
+      nativeEvent: {
+        data: JSON.stringify({ type: "REQUEST_PUSH_PERMISSION" }),
+      },
+    });
+
+    await waitFor(() => {
+      expect(requestPushPermissionAndRegister).toHaveBeenCalled();
+    });
   });
 });
