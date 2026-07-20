@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "925256572134",
+    "project_id": "yougabell-89e71",
+    "storage_bucket": "yougabell-89e71.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:925256572134:android:91bf076b3cdfd9eeceaf27",
+        "android_client_info": {
+          "package_name": "com.sayojeong.yougabell"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKruRb9k9qdgSvH9EKYDnEHUngnOKKRjg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
