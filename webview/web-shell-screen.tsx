@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import * as Notifications from "expo-notifications";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -21,8 +22,9 @@ import {
 
 import {
   getPushPermissionStatus,
-  requestPushPermission,
+  requestPushPermissionAndRegister,
 } from "./push-permission";
+import { resolvePushNotificationPath } from "./push-notification-routing";
 import { useWebviewSource } from "./use-webview-source";
 import { webShellStyles as styles } from "./web-shell-styles";
 import {
@@ -33,6 +35,15 @@ import {
 } from "./webview-bridge";
 
 type WebShellPhase = "loading" | "ready" | "error";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export function WebShellScreen() {
   const [phase, setPhase] = useState<WebShellPhase>("loading");
@@ -114,6 +125,27 @@ export function WebShellScreen() {
     };
   }, [configError, syncSessionToWebView]);
 
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const path = resolvePushNotificationPath(
+          response.notification.request.content.data ?? {},
+        );
+        if (!path) {
+          return;
+        }
+
+        setPhase("loading");
+        setStartPath(path);
+        setReloadKey((current) => current + 1);
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   const handleWebMessage = async (event: WebViewMessageEvent) => {
     const message = parseWebToNativeMessage(event.nativeEvent.data);
 
@@ -183,7 +215,7 @@ export function WebShellScreen() {
         return;
       case "REQUEST_PUSH_PERMISSION":
         try {
-          const permission = await requestPushPermission();
+          const permission = await requestPushPermissionAndRegister();
           webViewRef.current?.injectJavaScript(
             buildNativeMessageScript({
               type: "NATIVE_PUSH_PERMISSION_RESULT",

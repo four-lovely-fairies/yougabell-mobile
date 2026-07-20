@@ -24,7 +24,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": ["android.permission.POST_NOTIFICATIONS"],
-      "package": "com.sayojeong.yougabell"
+      "package": "com.sayojeong.yougabell",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",

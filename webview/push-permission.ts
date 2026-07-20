@@ -1,5 +1,6 @@
 import * as Notifications from "expo-notifications";
 import { PermissionsAndroid, Platform } from "react-native";
+import { registerExpoPushToken } from "./push-token-registration";
 
 export type PushPermissionResult = "granted" | "denied";
 
@@ -46,9 +47,7 @@ export async function requestPushPermission(): Promise<PushPermissionResult> {
     const result = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
     );
-    return result === PermissionsAndroid.RESULTS.GRANTED
-      ? "granted"
-      : "denied";
+    return result === PermissionsAndroid.RESULTS.GRANTED ? "granted" : "denied";
   }
 
   const current = await Notifications.getPermissionsAsync();
@@ -60,4 +59,19 @@ export async function requestPushPermission(): Promise<PushPermissionResult> {
   }
 
   return status === "granted" ? "granted" : "denied";
+}
+
+export async function requestPushPermissionAndRegister(): Promise<PushPermissionResult> {
+  const permission = await requestPushPermission();
+  if (permission !== "granted") {
+    return permission;
+  }
+
+  try {
+    await registerExpoPushToken();
+  } catch {
+    // 권한 허용 자체는 유지한다. 토큰 등록 실패는 다음 토글/앱 실행에서 재시도 가능하다.
+  }
+
+  return permission;
 }
