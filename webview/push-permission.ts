@@ -75,3 +75,20 @@ export async function requestPushPermissionAndRegister(): Promise<PushPermission
 
   return permission;
 }
+
+/**
+ * OS 권한이 이미 허용된 경우에만 토큰을 조용히 (재)등록한다. 프롬프트를 띄우지 않는다.
+ * 앱 실행·로그인 시 호출해 과거 온보딩 사용자, 토큰 로테이션, 재설치를 커버한다
+ * (온보딩에서만 등록되던 구조 보완 — 재로그인 강제 없이 자동 저장).
+ */
+export async function registerPushTokenIfGranted(): Promise<void> {
+  try {
+    const status = await getPushPermissionStatus();
+    if (status !== "granted") {
+      return;
+    }
+    await registerExpoPushToken();
+  } catch {
+    // 조용히 무시 — 다음 실행 기회에 재시도된다.
+  }
+}

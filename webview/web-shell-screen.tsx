@@ -22,6 +22,7 @@ import {
 
 import {
   getPushPermissionStatus,
+  registerPushTokenIfGranted,
   requestPushPermissionAndRegister,
 } from "./push-permission";
 import { resolvePushNotificationPath } from "./push-notification-routing";
@@ -118,6 +119,9 @@ export function WebShellScreen() {
       data: { subscription },
     } = getMobileSupabaseClient().auth.onAuthStateChange(() => {
       void syncSessionToWebView();
+      // 앱 실행(INITIAL_SESSION)·로그인 시, OS 권한이 이미 허용돼 있으면 토큰을
+      // 조용히 재등록한다. 온보딩에서만 등록되던 구조를 보완 — 재로그인 강제 없음.
+      void registerPushTokenIfGranted();
     });
 
     return () => {
