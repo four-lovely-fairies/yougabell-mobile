@@ -85,13 +85,45 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 
 ### 버전 체계
 
-- `app.json`의 `version`(versionName)은 사용자 표시 버전. 새 릴리즈마다 손으로 올린다 (예: `1.0.1` → `1.0.2`).
+이름이 비슷한 두 값이 **서로 다르게 관리된다.** 혼동이 실제 배포 사고로 이어졌으므로 먼저 구분한다.
+
+| 값                                    | 예시      | 관리 주체        | 자동 증가                    |
+| ------------------------------------- | --------- | ---------------- | ---------------------------- |
+| `app.json`의 `version` (표시 버전)    | `1.1.2`   | git (`app.json`) | **없음 — 사람이 올린다**     |
+| iOS buildNumber · Android versionCode | `16`/`17` | EAS 서버(remote) | 있음 (`autoIncrement: true`) |
+
+- **`version`을 자동으로 올려주는 장치는 어디에도 없다.** EAS도, CI도, 에이전트 설정(`.claude/settings.json`, 훅)도 하지 않는다. `eas.json`의 `autoIncrement: true`는 이름과 달리 **buildNumber/versionCode만** 증가시키며 `version`은 건드리지 않는다.
 - **versionCode/buildNumber는 `appVersionSource: "remote"`로 EAS 서버가 중앙 관리한다.** `app.json`에는 `android.versionCode`를 두지 않는다(있어도 remote 소스에선 무시됨). `autoIncrement: true`가 빌드마다 remote 카운터를 증가시키므로 **빌드 후 app.json에 되쓰이는 값이 없어 동기화 커밋이 필요 없다.**
   - 과거 `appVersionSource: "local"`일 때 git `app.json`의 versionCode가 스토어(Play Console) 실제 값보다 뒤처져(드리프트) 다운그레이드 제출 거부가 발생했다. remote로 전환해 재발을 막았다.
   - remote 카운터 초기값·수동 조정은 `eas build:version:set --platform android`(대화형). 현재 값 확인은 `eas build:version:get --platform android`.
-- `runtimeVersion`은 `{ policy: "appVersion" }` — OTA 업데이트는 **동일 `version`을 가진 빌드에만** 적용된다. `version`을 올리면 그 빌드부터는 새 OTA 채널 대상이 된다.
+- `runtimeVersion`은 `{ policy: "appVersion" }` — OTA 업데이트는 **동일 `version`을 가진 빌드에만** 적용된다. `version`을 올리면 그 빌드부터는 새 OTA 채널 대상이 된다. 그래서 커밋마다 기계적으로 범프하지 않고, 스토어 빌드를 낼 때만 올린다.
+- `package.json`의 `version`은 **쓰이지 않는다.** Expo는 `app.json`만 읽는다. 버전 판단 근거로 삼지 말 것.
+
+### 배포 전 버전 확인 (필수 — 모든 에이전트·사람 공통)
+
+**`eas build`를 큐잉하기 전에 반드시 이 절차를 먼저 수행한다.** Claude Code·Codex·Cursor 등 어떤 에이전트로 작업하든, 사람이 직접 하든 동일하다. 자동 증가가 없으므로 이 확인을 건너뛰면 아래 두 사고가 그대로 재발한다.
+
+```bash
+node -p "require('./app.json').expo.version"   # 1. git이 들고 있는 표시 버전
+eas build:list --limit 5 --non-interactive     # 2. EAS에 이미 올라간 빌드들의 appVersion
+```
+
+1. **두 값이 같으면 그 버전은 이미 제출된 것** → `app.json`의 `version`을 올린 뒤 빌드한다.
+   - 올리지 않고 제출하면 App Store Connect가 마케팅 버전(`CFBundleShortVersionString`)으로 빌드를 식별하기 때문에 **"이미 사용된 버전"으로 재제출을 거부**한다.
+   - 범프 폭: 버그 수정·재빌드 → patch(`1.1.1` → `1.1.2`), 기능 추가 → minor(`1.1.2` → `1.2.0`).
+2. **버전을 올렸으면 반드시 커밋해서 PR로 main에 반영한다.** 로컬에서만 고쳐 빌드하면 git과 스토어가 어긋난다.
+   - 커밋은 별도로 분리한다: `chore(mobile): 앱 버전 <이전> → <이후>`
+   - 빌드 전에 커밋해도 되고 빌드 후 같은 브랜치에 얹어도 되지만, **머지 없이 다음 배포로 넘어가지 않는다.**
+3. 빌드 완료 후 `eas build:list --limit 2`로 **큐잉된 빌드의 appVersion이 의도한 값인지** 확인하고 결과 보고에 포함한다.
+
+> 실제 사고 기록 — 둘 다 자동 증가가 있다고 오해해서 발생했다.
+>
+> - **2026-07-22**: `1.1.0`으로 재제출 → App Store Connect 거부 → `1.1.1`로 범프 후 재빌드 (PR #36).
+> - **2026-08-03**: 같은 원인으로 `1.1.1` 빌드가 막혀 로컬에서 `1.1.2`로 고쳐 빌드했으나 **커밋하지 않아** 스토어는 `1.1.2`, `main`은 `1.1.1`인 드리프트 발생.
 
 ### 빌드 · 제출
+
+> **먼저 위 [배포 전 버전 확인](#배포-전-버전-확인-필수--모든-에이전트사람-공통)을 수행한다.** `version`은 자동으로 올라가지 않는다.
 
 ```bash
 eas build  --platform android --profile production --non-interactive --no-wait   # 빌드 큐잉(.aab)

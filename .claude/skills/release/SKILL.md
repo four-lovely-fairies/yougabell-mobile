@@ -45,16 +45,30 @@ git push origin <현재 브랜치>
 
 각 레포 `AGENTS.md`에 명시된 배포 절차를 따름.
 
-| 레포                   | 배포 방식                                          |
-| ---------------------- | -------------------------------------------------- |
-| `yougabell` (umbrella) | docs-only — 별도 배포 없음                         |
-| `yougabell-api`        | TBD (Fly.io 검토 중) — 호스팅 결정 후 본 섹션 갱신 |
-| `yougabell-web`        | Vercel 자동 배포 (`main` push에 트리거)            |
-| `yougabell-admin`      | Vercel 자동 배포 (`main` push에 트리거)            |
-| `yougabell-mobile`     | EAS Build (`eas build --platform <ios\|android>`)  |
+| 레포                   | 배포 방식                                      |
+| ---------------------- | ---------------------------------------------- |
+| `yougabell` (umbrella) | docs-only — 별도 배포 없음                     |
+| `yougabell-api`        | Render Web Service (`main` push에 auto-deploy) |
+| `yougabell-web`        | Vercel 자동 배포 (`main` push에 트리거)        |
+| `yougabell-admin`      | Vercel 자동 배포 (`main` push에 트리거)        |
+| `yougabell-mobile`     | EAS Build — **아래 버전 게이트 통과 후** 빌드  |
+
+### mobile 전용: 빌드 전 버전 게이트 (건너뛰지 않는다)
+
+`app.json`의 `version`은 **자동으로 올라가지 않는다.** EAS `autoIncrement`가 올리는 것은 buildNumber/versionCode뿐이다. `eas build` 큐잉 전에:
+
+```bash
+node -p "require('./app.json').expo.version"   # git이 들고 있는 표시 버전
+eas build:list --limit 5 --non-interactive     # 이미 EAS에 올라간 빌드의 appVersion
+```
+
+- 두 값이 같으면 → 이미 제출된 버전 → `app.json`의 `version`을 올리고 `chore(mobile): 앱 버전 <이전> → <이후>`로 **별도 커밋**한 뒤 빌드한다. 올리지 않으면 App Store Connect가 재제출을 거부한다.
+- 버전을 올렸는데 커밋하지 않은 채 배포를 끝내지 않는다 (git ↔ 스토어 드리프트).
+- 상세 규칙·사고 이력은 [`AGENTS.md`](../../../AGENTS.md)의 "배포 전 버전 확인" 참조.
 
 ## 5단계: 결과 보고
 
 - 푸시된 커밋 목록 (`git log origin/<base>..HEAD --oneline` 또는 `git log --oneline -n <N>`)
 - 트리거된 배포 (Vercel URL, EAS Build ID 등)
+- mobile 빌드 시 **큐잉된 빌드의 appVersion**을 `eas build:list --limit 2`로 확인해 함께 보고
 - 후속 수동 작업 (스토어 제출, 마이그레이션 적용 등)
