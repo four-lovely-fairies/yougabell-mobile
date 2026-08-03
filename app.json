@@ -42,6 +42,12 @@
           "imageWidth": 356,
           "resizeMode": "contain",
           "backgroundColor": "#9572FF",
+          "android": {
+            "imageWidth": 200
+          },
+          "ios": {
+            "imageWidth": 356
+          },
           "dark": {
             "backgroundColor": "#9572FF"
           }
