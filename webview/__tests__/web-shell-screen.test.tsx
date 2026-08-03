@@ -15,6 +15,11 @@ jest.mock("expo-notifications", () => ({
   })),
 }));
 
+jest.mock("expo-splash-screen", () => ({
+  preventAutoHideAsync: jest.fn().mockResolvedValue(undefined),
+  hideAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock("../use-webview-source", () => ({
   useWebviewSource: () => ({
     uri: "https://web.yougabell.com",
@@ -49,15 +54,20 @@ jest.mock("../../auth/supabase-client", () => ({
 jest.mock("../push-permission", () => ({
   requestPushPermission: jest.fn().mockResolvedValue("granted"),
   requestPushPermissionAndRegister: jest.fn().mockResolvedValue("granted"),
+  registerPushTokenIfGranted: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock("react-native-webview", () => ({
   WebView: ({
     onError,
+    onLoad,
+    onLoadEnd,
     onMessage,
     testID,
   }: {
     onError: (event: unknown) => void;
+    onLoad: () => void;
+    onLoadEnd: () => void;
     onMessage: (event: unknown) => void;
     testID: string;
   }) => {
@@ -65,6 +75,12 @@ jest.mock("react-native-webview", () => ({
     const React = require("react");
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Text } = require("react-native");
+
+    React.useEffect(() => {
+      onLoad();
+      onLoadEnd();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return React.createElement(
       Text,
@@ -80,11 +96,15 @@ jest.mock("react-native-webview", () => ({
 }));
 
 describe("WebShellScreen", () => {
-  it("초기에는 로딩 문구를 보여준다", async () => {
+  it("WebView 로드 완료 시 네이티브 스플래시를 숨긴다", async () => {
+    const SplashScreen = jest.requireMock("expo-splash-screen") as {
+      hideAsync: jest.Mock;
+    };
+
     render(<WebShellScreen />);
 
     await waitFor(() => {
-      expect(screen.getByText("육아벨을 준비하고 있어요")).toBeTruthy();
+      expect(SplashScreen.hideAsync).toHaveBeenCalled();
     });
   });
 
@@ -97,7 +117,9 @@ describe("WebShellScreen", () => {
 
     fireEvent.press(screen.getByTestId("webview-shell"));
 
-    expect(screen.getByText("다시 시도")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("다시 시도")).toBeTruthy();
+    });
   });
 
   it("푸시 권한 요청 메시지를 받으면 권한 요청과 토큰 등록을 실행한다", async () => {

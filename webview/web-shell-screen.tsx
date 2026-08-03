@@ -1,5 +1,5 @@
-import { LinearGradient } from "expo-linear-gradient";
 import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -37,6 +37,10 @@ import {
 
 type WebShellPhase = "loading" | "ready" | "error";
 
+void SplashScreen.preventAutoHideAsync().catch(() => {
+  // The native splash may already be hidden in tests or during fast refresh.
+});
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: false,
@@ -53,6 +57,12 @@ export function WebShellScreen() {
   const source = useWebviewSource(startPath ?? "/mobile-entry");
   const webViewRef = useRef<WebView>(null);
   const configError = getMobileSupabaseConfigError();
+
+  const hideSplashScreen = useCallback(() => {
+    void SplashScreen.hideAsync().catch(() => {
+      // Ignore duplicate hide calls from reload/error races.
+    });
+  }, []);
 
   const resolveInitialPath = useCallback(async () => {
     const { data } = await getMobileSupabaseClient().auth.getSession();
@@ -90,6 +100,7 @@ export function WebShellScreen() {
 
   useEffect(() => {
     if (configError) {
+      hideSplashScreen();
       return;
     }
 
@@ -108,7 +119,7 @@ export function WebShellScreen() {
     return () => {
       active = false;
     };
-  }, [configError, resolveInitialPath]);
+  }, [configError, hideSplashScreen, resolveInitialPath]);
 
   useEffect(() => {
     if (configError) {
@@ -288,27 +299,20 @@ export function WebShellScreen() {
           source={source}
           style={styles.webview}
           injectedJavaScriptBeforeContentLoaded={buildWebViewBootstrapScript()}
-          onLoadEnd={() => setPhase("ready")}
-          onError={() => setPhase("error")}
+          onLoad={() => {
+            setPhase("ready");
+          }}
+          onLoadEnd={() => {
+            hideSplashScreen();
+          }}
+          onError={() => {
+            setPhase("error");
+            hideSplashScreen();
+          }}
           onMessage={(event) => {
             void handleWebMessage(event);
           }}
         />
-      ) : null}
-
-      {phase === "loading" || !startPath ? (
-        // 웹 앱 배경(bg-linear-to-br #f1eaff→#e8eeff→#dff4ff)과 동일한 그라데이션 →
-        // WebView가 뜨면 스플래시에서 본문으로 자연스럽게 이어진다.
-        <LinearGradient
-          pointerEvents="none"
-          colors={["#f1eaff", "#e8eeff", "#dff4ff"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.overlay}
-        >
-          <Text style={styles.title}>육아벨을 준비하고 있어요</Text>
-          <Text style={styles.body}>잠시만 기다려 주세요</Text>
-        </LinearGradient>
       ) : null}
 
       {phase === "error" ? (

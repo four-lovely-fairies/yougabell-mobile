@@ -37,7 +37,7 @@ Google은 두 플랫폼 다 외부 보안 브라우저(`expo-web-browser`의 `op
 - **`expo-notifications`** — 푸시. Android 13+는 `POST_NOTIFICATIONS` 런타임 권한, 그 이하와 iOS는 Notifications API로 처리하고, 권한 상태를 web에 다시 알려준다.
 - **`expo-secure-store`** — 토큰 보관. AsyncStorage는 시크릿 저장에 안 쓴다.
 - **`expo-apple-authentication` / `expo-auth-session` / `expo-web-browser`** — 위의 OAuth 흐름.
-- **`expo-linear-gradient`** — 로딩 오버레이를 web 배경색(`#f1eaff → #e8eeff → #dff4ff`)과 똑같이 칠해서, 스플래시에서 web으로 넘어갈 때 색이 튀지 않게 한다.
+- **`expo-splash-screen`** — WebView가 첫 화면을 로드할 때까지 네이티브 스플래시를 유지해 중간 앱 로딩 화면을 건너뛴다.
 
 ## 시작하기
 
