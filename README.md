@@ -10,7 +10,7 @@ Expo SDK 54 + React Native 0.81 기반이고, 빌드·배포는 EAS로 한다.
 
 이 레포의 심장은 `webview/webview-bridge.ts`다. WebView와 네이티브가 `postMessage`로 주고받는 메시지 프로토콜을 여기서 단일 정의한다. 모든 메시지는 `{ type, payload? }` 모양이고 타입이 붙어 있다.
 
-웹 → 네이티브로 가는 것들: `REQUEST_NATIVE_GOOGLE_SIGN_IN`, `REQUEST_NATIVE_APPLE_SIGN_IN`, `REQUEST_PUSH_PERMISSION`, `OPEN_EXTERNAL_URL`, `ONBOARDING_COMPLETE`, `LOGOUT` 같은 요청. 네이티브 → 웹으로는 `SUPABASE_SESSION_SYNC`(토큰 주입)나 로그인 취소/실패 알림이 돌아온다. 양쪽 타입 정의가 한 파일에 있어서, web 레포의 `lib/native-bridge.ts`와 짝을 맞추기 쉽다.
+웹 → 네이티브로 가는 것들: `REQUEST_NATIVE_GOOGLE_SIGN_IN`, `REQUEST_NATIVE_APPLE_SIGN_IN`, `REQUEST_PUSH_PERMISSION`, `OPEN_EXTERNAL_URL`, `ONBOARDING_COMPLETE`, `LOGOUT` 같은 요청. Android Google 로그인은 네이티브 Google Sign-In의 ID Token을 Supabase 세션으로 교환하고, iOS Google 로그인은 외부 보안 브라우저 OAuth를 사용한다. 네이티브 → 웹으로는 `SUPABASE_SESSION_SYNC`(토큰 주입)나 로그인 취소/실패 알림이 돌아온다. 양쪽 타입 정의가 한 파일에 있어서, web 레포의 `lib/native-bridge.ts`와 짝을 맞추기 쉽다.
 
 부팅 흐름도 토큰을 URL에 싣는 흔한 안티패턴을 피한다. WebView가 뜨면 `window.__YOUGABELL_NATIVE__ = true` 플래그를 심고, web이 `WEB_READY`를 보낼 때까지 기다렸다가 그제서야 `SUPABASE_SESSION_SYNC`로 세션을 넣어준다. web이 초기화를 마친 뒤에 인증 상태를 노출하는 셈이다.
 
@@ -18,7 +18,7 @@ Expo SDK 54 + React Native 0.81 기반이고, 빌드·배포는 EAS로 한다.
 
 WebView 안에서 OAuth 팝업은 신뢰하기 어렵다. 그래서 로그인은 네이티브가 직접 처리한다.
 
-Google은 두 플랫폼 다 외부 보안 브라우저(`expo-web-browser`의 `openAuthSessionAsync`)로 OAuth를 돌린다. Apple은 iOS에서 native `expo-apple-authentication`으로 identity token을 받아 `signInWithIdToken`에 넘기고, Android에서는 브라우저 OAuth로 간다. `Platform.OS` 분기로 깔끔하게 갈라지고, 결국 둘 다 Supabase 세션이라는 같은 지점으로 수렴한다. 딥링크 스킴은 `yougabell://auth/callback`이고, 이건 Supabase redirect allow-list에 등록돼 있어야 한다.
+Google은 Android에서 `@react-native-google-signin/google-signin`으로 ID Token을 받아 Supabase `signInWithIdToken`에 넘기고, iOS에서는 외부 보안 브라우저 OAuth를 사용한다. Apple은 iOS에서 native `expo-apple-authentication`으로 identity token을 받아 `signInWithIdToken`에 넘기고, Android에서는 브라우저 OAuth로 간다. `Platform.OS` 분기로 갈라지지만 모두 Supabase 세션이라는 같은 지점으로 수렴한다. 브라우저 OAuth의 딥링크 스킴은 `yougabell://auth/callback`이고, 이건 Supabase redirect allow-list에 등록돼 있어야 한다.
 
 ## 세션을 SecureStore에 쪼개 담기
 
@@ -36,7 +36,8 @@ Google은 두 플랫폼 다 외부 보안 브라우저(`expo-web-browser`의 `op
 - **`expo-router`** — 파일 기반 라우팅. 셸은 화면이 몇 개 안 되지만(WebView 진입, OAuth 콜백) 딥링크 처리에 편하다.
 - **`expo-notifications`** — 푸시. Android 13+는 `POST_NOTIFICATIONS` 런타임 권한, 그 이하와 iOS는 Notifications API로 처리하고, 권한 상태를 web에 다시 알려준다.
 - **`expo-secure-store`** — 토큰 보관. AsyncStorage는 시크릿 저장에 안 쓴다.
-- **`expo-apple-authentication` / `expo-auth-session` / `expo-web-browser`** — 위의 OAuth 흐름.
+- **`@react-native-google-signin/google-signin`** — Android 네이티브 Google 로그인과 ID Token 발급.
+- **`expo-apple-authentication` / `expo-auth-session` / `expo-web-browser`** — iOS Google 및 플랫폼별 Apple OAuth 흐름.
 - **`expo-splash-screen`** — WebView가 첫 화면을 로드할 때까지 네이티브 스플래시를 유지해 중간 앱 로딩 화면을 건너뛴다.
 
 ## 시작하기
@@ -57,6 +58,29 @@ pnpm eas:build:android:dev    # 또는 :preview / :prod, ios도 동일
 ```
 
 `eas.json`에 development(내부 APK + dev client), preview(내부 APK), simulator(iOS), production(TestFlight/Play) 프로파일이 있다. production은 버전 코드를 자동 증가시킨다.
+
+Google Play 제출은 같은 production AAB를 제출 프로파일에 따라 다른 트랙으로 보낸다.
+
+```bash
+# 1. 스토어용 AAB 빌드
+pnpm exec eas build --platform android --profile production --non-interactive
+
+# 2. 위 빌드 ID를 내부 테스트 트랙에 제출
+pnpm exec eas submit --platform android --profile internal --id <BUILD_ID> --non-interactive
+
+# 3. 검증 후 같은 빌드 ID를 프로덕션 트랙에 제출
+pnpm exec eas submit --platform android --profile production --id <BUILD_ID> --non-interactive
+```
+
+### Android 네이티브 Google 로그인 설정
+
+`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`는 현재 Supabase Google Provider가 사용하는 Web application OAuth Client ID다. 같은 Google Cloud 프로젝트에 패키지명 `com.sayojeong.yougabell`과 서명 인증서 SHA-1을 묶은 Android OAuth Client를 만들어야 한다.
+
+- Play Store 설치본: Play Console → 앱 무결성 → 앱 서명 키 인증서의 SHA-1 등록
+- EAS development/preview 직접 설치본: EAS Android keystore의 SHA-1 등록
+- 로컬 `expo run:android`: 로컬 debug keystore의 SHA-1 등록
+
+서명 키마다 Android OAuth Client를 따로 만들 수 있다. Web Client ID는 공개 식별자라 `eas.json` 빌드 환경에도 포함돼 있다. 이 모듈은 Expo Go에서 실행되지 않으므로 development build나 EAS APK에서 테스트한다.
 
 ### 푸시 알림 설정
 

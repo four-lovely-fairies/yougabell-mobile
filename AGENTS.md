@@ -38,9 +38,9 @@ pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레
   - 카메라 · 사진 (성장 기록 첨부)
   - 딥링크
 - **WebView ↔ Native 통신**: `postMessage` 프로토콜은 `webview/webview-bridge.ts`를 단일 진실로 사용.
-- **Google OAuth**: WebView 안에서 직접 시작하지 않는다. mobile이 외부 보안 브라우저 OAuth를 수행하고 WebView 세션을 동기화한다.
+- **Google 로그인**: WebView 안에서 직접 시작하지 않는다. Android는 `@react-native-google-signin/google-signin`으로 ID Token을 받은 뒤 Supabase `signInWithIdToken`을 호출하고, iOS는 외부 보안 브라우저 OAuth를 수행한다. 완료된 Supabase 세션을 WebView에 동기화한다.
 - **Apple OAuth**: iOS는 `expo-apple-authentication` 기반 native 로그인, Android는 외부 보안 브라우저 OAuth를 사용한다.
-- **OAuth 콜백은 `auth/open-oauth-session.ts`의 `openOAuthSession`으로만 연다** (Google·Apple Android 공통). 직접 `WebBrowser.openAuthSessionAsync`만 쓰지 않는다.
+- **브라우저 OAuth 콜백은 `auth/open-oauth-session.ts`의 `openOAuthSession`으로만 연다** (Google iOS·Apple Android). 직접 `WebBrowser.openAuthSessionAsync`만 쓰지 않는다.
   - **Android 딥링크 함정**: `app.json`의 `scheme: "yougabell"` + `app/auth/callback.tsx` 라우트 때문에 Android에 `yougabell://auth/callback` 딥링크 intent-filter가 자동 등록된다. Supabase가 이 커스텀 스킴으로 302 리다이렉트하면 Android 딥링크가 URL을 먼저 가로채 앱을 foreground로 띄우고 Chrome Custom Tab은 dismiss된다. 그 결과 `openAuthSessionAsync`는 `{ type: "dismiss" }`만 반환하고 인증 `code`는 WebBrowser 결과가 아니라 `Linking` 딥링크로 도착한다 → 처리 누락 시 **Android만 가입/로그인 실패**(증상: `type=dismiss url=none`).
   - **해결**: `openOAuthSession`이 WebBrowser `success`와 `Linking` 딥링크 두 경로를 함께 기다려 먼저 도착하는 콜백 URL을 쓴다. iOS의 `ASWebAuthenticationSession`은 스킴을 내부에서 가로채 `success`를 반환하므로 이 우회가 필요 없다.
 - **컴포넌트 파일명**: kebab-case (`webview-bridge.tsx`).
@@ -70,6 +70,7 @@ pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레
 - `EXPO_PUBLIC_WEB_URL`
 - `EXPO_PUBLIC_SUPABASE_URL`
 - `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (Google Cloud의 Web application OAuth Client ID, Android 네이티브 Google 로그인용)
 
 Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추가한다.
 
