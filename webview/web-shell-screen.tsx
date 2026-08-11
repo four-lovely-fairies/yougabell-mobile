@@ -13,7 +13,8 @@ import {
 import {
   NativeGoogleSignInCancelledError,
   NativeGoogleSignInError,
-  signInWithGoogleInBrowser,
+  signInWithGoogle,
+  signOutFromGoogleIfNative,
 } from "../auth/google-sign-in";
 import {
   getMobileSupabaseClient,
@@ -172,7 +173,7 @@ export function WebShellScreen() {
         return;
       case "REQUEST_NATIVE_GOOGLE_SIGN_IN":
         try {
-          await signInWithGoogleInBrowser();
+          await signInWithGoogle();
           await reloadWebEntry();
         } catch (error) {
           if (error instanceof NativeGoogleSignInCancelledError) {
@@ -225,7 +226,10 @@ export function WebShellScreen() {
         }
         return;
       case "LOGOUT":
-        await getMobileSupabaseClient().auth.signOut();
+        await Promise.all([
+          getMobileSupabaseClient().auth.signOut(),
+          signOutFromGoogleIfNative(),
+        ]);
         setStartPath("/onboarding/intro");
         return;
       case "REQUEST_PUSH_PERMISSION":

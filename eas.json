@@ -7,6 +7,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "513741884646-cl1eb8l5saa34qetp6qf7f21i70uspvn.apps.googleusercontent.com"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -17,6 +20,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "513741884646-cl1eb8l5saa34qetp6qf7f21i70uspvn.apps.googleusercontent.com"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -30,10 +36,19 @@
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "513741884646-cl1eb8l5saa34qetp6qf7f21i70uspvn.apps.googleusercontent.com"
+      }
     }
   },
   "submit": {
+    "internal": {
+      "android": {
+        "serviceAccountKeyPath": "./sayojeong-0c9603409e39.json",
+        "track": "internal"
+      }
+    },
     "production": {
       "ios": {
         "ascAppId": "6773707307"

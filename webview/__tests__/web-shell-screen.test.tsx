@@ -27,7 +27,8 @@ jest.mock("../use-webview-source", () => ({
 }));
 
 jest.mock("../../auth/google-sign-in", () => ({
-  signInWithGoogleInBrowser: jest.fn(),
+  signInWithGoogle: jest.fn(),
+  signOutFromGoogleIfNative: jest.fn(),
   NativeGoogleSignInCancelledError: class NativeGoogleSignInCancelledError extends Error {},
   NativeGoogleSignInError: class NativeGoogleSignInError extends Error {},
 }));
