@@ -3,6 +3,7 @@ import { PermissionsAndroid, Platform } from "react-native";
 import { registerExpoPushToken } from "./push-token-registration";
 
 export type PushPermissionResult = "granted" | "denied";
+export type PushPermissionStatus = PushPermissionResult | "undetermined";
 
 async function ensureAndroidChannel() {
   if (Platform.OS === "android") {
@@ -13,21 +14,19 @@ async function ensureAndroidChannel() {
   }
 }
 
-export async function getPushPermissionStatus(): Promise<PushPermissionResult> {
+export async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
   await ensureAndroidChannel();
   if (Platform.OS === "android") {
     if (Platform.Version < 33) {
       return "granted";
     }
-
-    const granted = await PermissionsAndroid.check(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-    );
-    return granted ? "granted" : "denied";
   }
 
   const current = await Notifications.getPermissionsAsync();
-  return current.status === "granted" ? "granted" : "denied";
+  if (current.status === "granted") {
+    return "granted";
+  }
+  return current.status === "undetermined" ? "undetermined" : "denied";
 }
 
 export async function requestPushPermission(): Promise<PushPermissionResult> {
