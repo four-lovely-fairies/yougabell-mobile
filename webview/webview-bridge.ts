@@ -29,7 +29,7 @@ export type NativeToWebMessage =
     }
   | {
       type: "NATIVE_PUSH_PERMISSION_STATUS";
-      payload: { permission: "granted" | "denied" };
+      payload: { permission: "granted" | "denied" | "undetermined" };
     };
 
 export function buildWebViewBootstrapScript() {

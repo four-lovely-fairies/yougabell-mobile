@@ -67,4 +67,14 @@ describe("webview bridge helpers", () => {
       ),
     ).toEqual({ type: "REQUEST_PUSH_PERMISSION_STATUS" });
   });
+
+  it("builds an undetermined push permission status response", () => {
+    const script = buildNativeMessageScript({
+      type: "NATIVE_PUSH_PERMISSION_STATUS",
+      payload: { permission: "undetermined" },
+    });
+
+    expect(script).toContain("NATIVE_PUSH_PERMISSION_STATUS");
+    expect(script).toContain("undetermined");
+  });
 });
