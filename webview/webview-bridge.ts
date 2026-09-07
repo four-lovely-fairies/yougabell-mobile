@@ -32,8 +32,23 @@ export type NativeToWebMessage =
       payload: { permission: "granted" | "denied" | "undetermined" };
     };
 
-export function buildWebViewBootstrapScript() {
-  return "window.__YOUGABELL_NATIVE__ = true; true;";
+export type PerformanceBootstrap = {
+  launchId: string;
+  startedAt: number;
+  appVersion: string;
+  appRelease: string;
+  platform: string;
+  entryPath: string;
+  sessionLookupMs?: number;
+};
+
+export function buildWebViewBootstrapScript(
+  performance?: PerformanceBootstrap,
+) {
+  const metadata = performance
+    ? `window.__YOUGABELL_PERFORMANCE__ = ${JSON.stringify(performance).replace(/</g, "\\u003c")}; `
+    : "";
+  return `window.__YOUGABELL_NATIVE__ = true; ${metadata}true;`;
 }
 
 export function parseWebToNativeMessage(
