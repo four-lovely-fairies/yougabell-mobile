@@ -1,7 +1,9 @@
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Linking, Platform, Pressable, Text, View } from "react-native";
+import { expo } from "../app.json";
+import * as Updates from "expo-updates";
 import type { WebViewMessageEvent } from "react-native-webview";
 import { WebView } from "react-native-webview";
 
@@ -52,6 +54,18 @@ Notifications.setNotificationHandler({
 });
 
 export function WebShellScreen() {
+  // JS shell mount, not OS process launch. Stable across WebView hard reloads.
+  const [performanceContext] = useState(() => ({
+    startedAt: Date.now(),
+    launchId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    appVersion: expo.version,
+    appRelease:
+      Updates.updateId ??
+      process.env.EXPO_PUBLIC_PERFORMANCE_RELEASE ??
+      "embedded-unknown",
+    platform: Platform.OS,
+  }));
+  const [sessionLookupMs, setSessionLookupMs] = useState<number | undefined>();
   const [phase, setPhase] = useState<WebShellPhase>("loading");
   const [reloadKey, setReloadKey] = useState(0);
   const [startPath, setStartPath] = useState<string | null>(null);
@@ -66,7 +80,9 @@ export function WebShellScreen() {
   }, []);
 
   const resolveInitialPath = useCallback(async () => {
+    const started = performance.now();
     const { data } = await getMobileSupabaseClient().auth.getSession();
+    setSessionLookupMs(performance.now() - started);
     return data.session ? "/mobile-entry" : "/onboarding/intro";
   }, []);
 
@@ -302,7 +318,11 @@ export function WebShellScreen() {
           testID="webview-shell"
           source={source}
           style={styles.webview}
-          injectedJavaScriptBeforeContentLoaded={buildWebViewBootstrapScript()}
+          injectedJavaScriptBeforeContentLoaded={buildWebViewBootstrapScript({
+            ...performanceContext,
+            entryPath: startPath ?? "/mobile-entry",
+            sessionLookupMs,
+          })}
           onLoad={() => {
             setPhase("ready");
           }}
