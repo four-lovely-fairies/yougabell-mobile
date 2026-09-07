@@ -37,6 +37,10 @@ import {
   buildWebViewBootstrapScript,
   parseWebToNativeMessage,
 } from "./webview-bridge";
+import {
+  getNativeStartupTiming,
+  type NativeStartupTiming,
+} from "../modules/native-startup";
 
 type WebShellPhase = "loading" | "ready" | "error";
 
@@ -66,6 +70,8 @@ export function WebShellScreen() {
     platform: Platform.OS,
   }));
   const [sessionLookupMs, setSessionLookupMs] = useState<number | undefined>();
+  const [nativeStartupTiming, setNativeStartupTiming] =
+    useState<NativeStartupTiming | null>(null);
   const [phase, setPhase] = useState<WebShellPhase>("loading");
   const [reloadKey, setReloadKey] = useState(0);
   const [startPath, setStartPath] = useState<string | null>(null);
@@ -81,8 +87,12 @@ export function WebShellScreen() {
 
   const resolveInitialPath = useCallback(async () => {
     const started = performance.now();
-    const { data } = await getMobileSupabaseClient().auth.getSession();
+    const [{ data }, startupTiming] = await Promise.all([
+      getMobileSupabaseClient().auth.getSession(),
+      getNativeStartupTiming(),
+    ]);
     setSessionLookupMs(performance.now() - started);
+    setNativeStartupTiming(startupTiming);
     return data.session ? "/mobile-entry" : "/onboarding/intro";
   }, []);
 
@@ -320,8 +330,14 @@ export function WebShellScreen() {
           style={styles.webview}
           injectedJavaScriptBeforeContentLoaded={buildWebViewBootstrapScript({
             ...performanceContext,
+            startedAt:
+              nativeStartupTiming?.startedAtEpochMs ?? performanceContext.startedAt,
             entryPath: startPath ?? "/mobile-entry",
             sessionLookupMs,
+            startupClock: nativeStartupTiming?.clock ?? "js_shell",
+            ...(nativeStartupTiming
+              ? { nativeStartupElapsedMs: nativeStartupTiming.elapsedMs }
+              : {}),
           })}
           onLoad={() => {
             setPhase("ready");

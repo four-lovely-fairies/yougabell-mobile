@@ -1,0 +1,9 @@
+{
+  "name": "yougabell-native-startup",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "private": true,
+  "peerDependencies": {
+    "expo-modules-core": "*"
+  }
+}

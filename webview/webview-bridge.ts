@@ -40,6 +40,8 @@ export type PerformanceBootstrap = {
   platform: string;
   entryPath: string;
   sessionLookupMs?: number;
+  startupClock?: "android_elapsed_realtime" | "ios_system_uptime" | "js_shell";
+  nativeStartupElapsedMs?: number;
 };
 
 export function buildWebViewBootstrapScript(

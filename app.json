@@ -35,6 +35,7 @@
       "expo-router",
       "expo-apple-authentication",
       "expo-notifications",
+      "./plugins/with-native-startup-timing.js",
       [
         "expo-splash-screen",
         {
