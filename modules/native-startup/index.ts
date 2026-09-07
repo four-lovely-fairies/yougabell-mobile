@@ -1,29 +1,16 @@
-import { requireNativeModule } from "expo-modules-core";
-
-export type NativeStartupTiming = {
-  /** Wall-clock estimate of the native process launch. */
-  startedAtEpochMs: number;
-  /** Monotonic-clock duration from native process launch until this call. */
-  elapsedMs: number;
-  clock: "android_elapsed_realtime" | "ios_system_uptime";
-};
-
-type NativeStartupModule = {
-  getStartupTimingAsync(): Promise<NativeStartupTiming | null>;
-};
-
-let nativeModule: NativeStartupModule | null = null;
-
-try {
-  nativeModule = requireNativeModule<NativeStartupModule>("NativeStartup");
-} catch {
-  // Expo Go and web do not contain the app-specific native module.
-}
-
-export async function getNativeStartupTiming(): Promise<NativeStartupTiming | null> {
+import { requireOptionalNativeModule } from "expo-modules-core";
+type StartupResult = Record<string, string | number>;
+const nativeStartup = requireOptionalNativeModule<{
+  finishHomeAsync(): Promise<StartupResult>;
+}>("NativeStartup");
+export async function finishNativeHome(): Promise<StartupResult> {
   try {
-    return (await nativeModule?.getStartupTimingAsync()) ?? null;
+    return (
+      (await nativeStartup?.finishHomeAsync()) ?? {
+        reason: "native_module_unavailable",
+      }
+    );
   } catch {
-    return null;
+    return { reason: "native_module_error" };
   }
 }

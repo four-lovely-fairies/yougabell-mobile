@@ -2,51 +2,36 @@ const {
   withAppDelegate,
   withMainApplication,
 } = require("@expo/config-plugins");
-
-const ANDROID_MARKER = "// yougabell-native-startup-timing";
-const IOS_MARKER = "// yougabell-native-startup-timing";
-
-/**
- * Stores a process-start baseline before React Native starts. The local Expo
- * module reads this baseline later, after the WebView has rendered the home.
- */
+function insert(contents, anchor, addition) {
+  if (contents.includes(addition)) return contents;
+  if (contents.split(anchor).length !== 2)
+    throw new Error("Startup timing anchor missing or ambiguous: " + anchor);
+  return contents.replace(anchor, anchor + addition);
+}
 module.exports = function withNativeStartupTiming(config) {
-  config = withMainApplication(config, (nextConfig) => {
-    let { contents } = nextConfig.modResults;
-    if (contents.includes(ANDROID_MARKER)) return nextConfig;
-
-    if (!contents.includes("import android.os.SystemClock")) {
-      contents = contents.replace(
-        "import android.content.res.Configuration",
-        "import android.content.res.Configuration\nimport android.os.SystemClock",
-      );
-    }
-
-    const onCreate = "  override fun onCreate() {";
-    if (!contents.includes(onCreate)) {
-      throw new Error("Could not find MainApplication.onCreate for startup timing");
-    }
-    contents = contents.replace(
-      onCreate,
-      `${onCreate}\n    ${ANDROID_MARKER}\n    getSharedPreferences(\"yougabell.nativeStartup\", MODE_PRIVATE)\n      .edit()\n      .putLong(\"process_started_elapsed_ms\", SystemClock.elapsedRealtime())\n      .putLong(\"process_started_wall_ms\", System.currentTimeMillis())\n      .apply()`,
+  config = withMainApplication(config, (mod) => {
+    mod.modResults.contents = insert(
+      mod.modResults.contents,
+      "  override fun onCreate() {",
+      "\n    com.sayojeong.yougabell.nativestartup.StartupClock.start(this)",
     );
-    nextConfig.modResults.contents = contents;
-    return nextConfig;
+    return mod;
   });
-
-  return withAppDelegate(config, (nextConfig) => {
-    let { contents } = nextConfig.modResults;
-    if (contents.includes(IOS_MARKER)) return nextConfig;
-
-    const didFinish = "  ) -> Bool {";
-    if (!contents.includes(didFinish)) {
-      throw new Error("Could not find AppDelegate.didFinishLaunching for startup timing");
-    }
-    contents = contents.replace(
-      didFinish,
-      `${didFinish}\n    ${IOS_MARKER}\n    UserDefaults.standard.set(ProcessInfo.processInfo.systemUptime * 1000, forKey: \"yougabell.nativeStartup.processStartedUptimeMs\")\n    UserDefaults.standard.set(Date().timeIntervalSince1970 * 1000, forKey: \"yougabell.nativeStartup.processStartedWallMs\")`,
+  return withAppDelegate(config, (mod) => {
+    let contents = insert(
+      mod.modResults.contents,
+      "import Expo",
+      "\nimport NativeStartup",
     );
-    nextConfig.modResults.contents = contents;
-    return nextConfig;
+    const match = contents.match(
+      /didFinishLaunchingWithOptions[^]*?\) -> Bool \{/,
+    );
+    if (!match) throw new Error("Swift didFinishLaunching missing");
+    mod.modResults.contents = insert(
+      contents,
+      match[0],
+      "\n    StartupClock.start(application)",
+    );
+    return mod;
   });
 };

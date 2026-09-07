@@ -15,4 +15,5 @@ Pod::Spec.new do |s|
   s.static_framework = true
   s.dependency 'ExpoModulesCore'
   s.source_files = '**/*.{h,m,swift}'
+  s.resource_bundles = { 'NativeStartup_privacy' => ['PrivacyInfo.xcprivacy'] }
 end

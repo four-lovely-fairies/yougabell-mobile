@@ -37,10 +37,7 @@ import {
   buildWebViewBootstrapScript,
   parseWebToNativeMessage,
 } from "./webview-bridge";
-import {
-  getNativeStartupTiming,
-  type NativeStartupTiming,
-} from "../modules/native-startup";
+import { finishNativeHome } from "../modules/native-startup";
 
 type WebShellPhase = "loading" | "ready" | "error";
 
@@ -70,8 +67,8 @@ export function WebShellScreen() {
     platform: Platform.OS,
   }));
   const [sessionLookupMs, setSessionLookupMs] = useState<number | undefined>();
-  const [nativeStartupTiming, setNativeStartupTiming] =
-    useState<NativeStartupTiming | null>(null);
+  const startupInvalidReason = useRef<string | null>(null);
+  const startupFinished = useRef(false);
   const [phase, setPhase] = useState<WebShellPhase>("loading");
   const [reloadKey, setReloadKey] = useState(0);
   const [startPath, setStartPath] = useState<string | null>(null);
@@ -87,22 +84,21 @@ export function WebShellScreen() {
 
   const resolveInitialPath = useCallback(async () => {
     const started = performance.now();
-    const [{ data }, startupTiming] = await Promise.all([
-      getMobileSupabaseClient().auth.getSession(),
-      getNativeStartupTiming(),
-    ]);
+    const { data } = await getMobileSupabaseClient().auth.getSession();
     setSessionLookupMs(performance.now() - started);
-    setNativeStartupTiming(startupTiming);
+    if (!data.session) startupInvalidReason.current = "onboarding_or_login";
     return data.session ? "/mobile-entry" : "/onboarding/intro";
   }, []);
 
   const handleRetry = async () => {
+    startupInvalidReason.current = "retry";
     setPhase("loading");
     setStartPath(await resolveInitialPath());
     setReloadKey((current) => current + 1);
   };
 
   const reloadWebEntry = async () => {
+    startupInvalidReason.current = "auth_reload";
     setPhase("loading");
     setStartPath(await resolveInitialPath());
     setReloadKey((current) => current + 1);
@@ -177,6 +173,7 @@ export function WebShellScreen() {
           return;
         }
 
+        startupInvalidReason.current = "notification_navigation";
         setPhase("loading");
         setStartPath(path);
         setReloadKey((current) => current + 1);
@@ -194,6 +191,29 @@ export function WebShellScreen() {
     if (!message) return;
 
     switch (message.type) {
+      case "PERFORMANCE_HOME_READY": {
+        if (
+          message.payload.launchId !== performanceContext.launchId ||
+          startupFinished.current
+        )
+          return;
+        startupFinished.current = true;
+        // Hide the native cover before acknowledging web content readiness.
+        await SplashScreen.hideAsync().catch(() => {
+          startupInvalidReason.current = "splash_hide_failed";
+        });
+        const result = startupInvalidReason.current
+          ? { reason: startupInvalidReason.current }
+          : await finishNativeHome();
+        const detail = JSON.stringify({
+          ...result,
+          launch_id: performanceContext.launchId,
+        }).replace(/</g, "\\u003c");
+        webViewRef.current?.injectJavaScript(
+          `window.dispatchEvent(new CustomEvent("yougabell-startup-result", {detail: ${detail}})); true;`,
+        );
+        return;
+      }
       case "WEB_READY":
         await syncSessionToWebView();
         return;
@@ -330,14 +350,9 @@ export function WebShellScreen() {
           style={styles.webview}
           injectedJavaScriptBeforeContentLoaded={buildWebViewBootstrapScript({
             ...performanceContext,
-            startedAt:
-              nativeStartupTiming?.startedAtEpochMs ?? performanceContext.startedAt,
             entryPath: startPath ?? "/mobile-entry",
             sessionLookupMs,
-            startupClock: nativeStartupTiming?.clock ?? "js_shell",
-            ...(nativeStartupTiming
-              ? { nativeStartupElapsedMs: nativeStartupTiming.elapsedMs }
-              : {}),
+            startupProtocol: 2,
           })}
           onLoad={() => {
             setPhase("ready");

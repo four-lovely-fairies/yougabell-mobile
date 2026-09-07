@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 export const NATIVE_WEBVIEW_EVENT_NAME = "yougabell-native-message";
 
 export type WebToNativeMessage =
+  | { type: "PERFORMANCE_HOME_READY"; payload: { launchId: string } }
   | { type: "WEB_READY" }
   | { type: "REQUEST_NATIVE_GOOGLE_SIGN_IN" }
   | { type: "REQUEST_NATIVE_APPLE_SIGN_IN" }
@@ -42,6 +43,7 @@ export type PerformanceBootstrap = {
   sessionLookupMs?: number;
   startupClock?: "android_elapsed_realtime" | "ios_system_uptime" | "js_shell";
   nativeStartupElapsedMs?: number;
+  startupProtocol?: number;
 };
 
 export function buildWebViewBootstrapScript(
@@ -64,6 +66,10 @@ export function parseWebToNativeMessage(
     }
 
     switch (parsed.type) {
+      case "PERFORMANCE_HOME_READY":
+        return parsed.payload && typeof parsed.payload.launchId === "string"
+          ? (parsed as WebToNativeMessage)
+          : null;
       case "WEB_READY":
       case "REQUEST_NATIVE_GOOGLE_SIGN_IN":
       case "REQUEST_NATIVE_APPLE_SIGN_IN":
