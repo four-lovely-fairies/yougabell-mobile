@@ -77,6 +77,14 @@ git push origin <현재 브랜치>
 | `yougabell-admin`      | Vercel 자동 배포 (`main` push에 트리거)        |
 | `yougabell-mobile`     | EAS Build — **아래 버전 게이트 통과 후** 빌드  |
 
+`yougabell-mobile` 변경이 기존 바이너리에 OTA 가능한 JS/TS-only 작업이면 production 배포에 다음 package script만 사용한다.
+
+```bash
+pnpm eas:update:prod --message "<요약>"
+```
+
+이 스크립트에 고정된 `--environment production`을 제거하거나, 해당 옵션 없는 원시 `eas update`로 대체하지 않는다. Expo SDK 54에서는 옵션을 생략할 경우 실행 환경의 로컬 `.env`로 폴백하여 Supabase 등 `EXPO_PUBLIC_*` 값이 누락될 수 있다.
+
 ### mobile 전용: 빌드 직전 재확인 (마지막 안전장치)
 
 2단계에서 이미 버전 범프가 같은 PR에 포함되어 있어야 한다. `app.json`의 `version`은 자동으로 올라가지 않으며, EAS `autoIncrement`가 올리는 것은 buildNumber/versionCode뿐이다. `eas build` 큐잉 직전에 아래를 다시 확인한다.
