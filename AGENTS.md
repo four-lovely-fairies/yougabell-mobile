@@ -94,6 +94,8 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 
 현재 version이 이미 EAS 빌드에 사용되었다면 patch version을 올리고 `chore(mobile): 앱 버전 <이전> → <이후>` 별도 커밋을 **같은 기능 PR에 포함**한다. JS/TS-only이며 기존 바이너리에 OTA 가능한 변경은 이 규칙으로 version을 올리지 않는다. EAS Build 직전 확인은 누락을 잡는 마지막 안전장치다.
 
+예외: 같은 스토어 릴리스의 빌드가 컴파일·서명·제출 전에 실패하여 재시도하는 경우에는 표시 version을 다시 올리지 않는다. 성공한 다른 플랫폼과 같은 version을 유지하고 EAS remote autoIncrement로 실패한 플랫폼의 buildNumber/versionCode만 증가시킨다.
+
 ### 새 네이티브 빌드 빠른 실행 순서
 
 네이티브 코드·Expo config plugin·`app.json` 네이티브 설정이 바뀐 경우(예: 앱 시작 계측)는 **OTA가 아니라 새 스토어 빌드**가 필요하다. 관련 웹 배포가 있다면 웹 PR을 먼저 main에 머지해 프로덕션 배포가 끝난 것을 확인하고, 버전 범프 커밋이 포함된 모바일 PR을 main에 머지한 checkout에서 아래를 실행한다.

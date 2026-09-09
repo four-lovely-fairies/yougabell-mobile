@@ -46,6 +46,7 @@ pnpm exec eas build:list --limit 5 --non-interactive
 - 버전 변경은 `chore(mobile): 앱 버전 <이전> → <이후>`라는 **별도 커밋**으로 만들고, 기능 변경과 같은 PR에 포함한다.
 - 버전 범프 없이 PR을 머지한 다음 version-only 후속 PR을 만들지 않는다.
 - 여러 플랫폼을 한 번에 배포해도 `app.json` version은 한 번만 올린다. buildNumber/versionCode는 EAS remote autoIncrement가 별도로 관리한다.
+- 같은 스토어 릴리스의 빌드가 컴파일·서명·제출 전에 실패하여 동일 플랫폼을 재시도하는 경우에는 `app.json` version을 다시 올리지 않는다. 성공한 다른 플랫폼과 같은 표시 버전을 유지하고, EAS remote autoIncrement가 실패한 플랫폼의 buildNumber/versionCode만 새로 발급하게 한다.
 
 ## 3단계: /sync-docs 실행
 
