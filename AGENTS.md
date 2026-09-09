@@ -84,6 +84,26 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 
 기본 흐름: **EAS Build → 스토어 제출(submit) → 사용자 스토어 업데이트**. JS-only 수정은 **EAS Update(OTA)**로 스토어 심사 없이 즉시 배포 가능.
 
+### 새 네이티브 빌드 빠른 실행 순서
+
+네이티브 코드·Expo config plugin·`app.json` 네이티브 설정이 바뀐 경우(예: 앱 시작 계측)는 **OTA가 아니라 새 스토어 빌드**가 필요하다. 관련 웹 배포가 있다면 웹 PR을 먼저 main에 머지해 프로덕션 배포가 끝난 것을 확인하고, 모바일 PR과 버전 범프 PR을 main에 머지한 checkout에서 아래를 실행한다.
+
+```bash
+# 1. 이미 사용한 표시 버전인지 확인한다.
+node -p "require('./app.json').expo.version"
+eas build:list --limit 5 --non-interactive
+
+# 2. 이미 사용한 version이면 app.json version을 올려 별도 커밋·PR·main 머지 후 진행한다.
+# 3. Android production .aab 빌드를 큐에 넣는다.
+eas build --platform android --profile production --non-interactive --no-wait
+
+# 4. 완료된 buildId를 확인한 뒤 internal track에 제출한다.
+eas build:list --limit 2 --non-interactive
+eas submit --platform android --profile production --id <buildId> --non-interactive
+```
+
+`eas.json`의 Android submit 기본 track은 `internal`이다. 실사용자 공개는 Play Console에서 production으로 승격한다. iOS도 필요하면 `android`를 `ios`로 바꿔 같은 절차를 밟는다.
+
 ### 버전 체계
 
 이름이 비슷한 두 값이 **서로 다르게 관리된다.** 혼동이 실제 배포 사고로 이어졌으므로 먼저 구분한다.

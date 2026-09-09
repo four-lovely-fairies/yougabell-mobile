@@ -5,7 +5,7 @@
 ## 지표
 
 - 기존 화면별 screen_first_data: 화면 라우팅부터 데이터 반영까지. 앱 실행 전체 시간이 아니다.
-- Performance native_home_ready: Android Application.onCreate 또는 iOS AppDelegate.didFinishLaunching에서 시작하여, 홈 첫 뷰포트 이미지 decode·폰트 준비·두 animation frame 후 웹이 보낸 신호를 네이티브가 받은 시간. 스플래시 hide 완료 후 같은 네이티브 단조 시계로 계산한다. 브리지 전달 지연을 포함한다.
+- Performance native_home_ready: Android Application.onCreate 또는 iOS AppDelegate.didFinishLaunching에서 시작하여, 홈 첫 뷰포트 이미지 decode·폰트 준비·두 animation frame 후 웹이 보낸 신호를 네이티브가 받은 시간. 네이티브 단조 시계로 계산하며 브리지 전달 지연을 포함한다. 기존 동작상 스플래시는 WebView 로드 종료 때 먼저 숨겨질 수 있으므로, 스플래시가 사라진 시점은 이 지표의 종료점이 아니다.
 - Performance native_home_ready_skipped: 계측 불가 사유. 이를 0ms 성공으로 집계하지 않는다.
 - 구버전 native_shell_home은 wall-clock 기반 기존 지표다. v2와 혼합하지 않는다.
 

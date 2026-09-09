@@ -198,10 +198,6 @@ export function WebShellScreen() {
         )
           return;
         startupFinished.current = true;
-        // Hide the native cover before acknowledging web content readiness.
-        await SplashScreen.hideAsync().catch(() => {
-          startupInvalidReason.current = "splash_hide_failed";
-        });
         const result = startupInvalidReason.current
           ? { reason: startupInvalidReason.current }
           : await finishNativeHome();
