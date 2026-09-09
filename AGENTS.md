@@ -17,7 +17,7 @@ pnpm test               # jest
 pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레이트 초기화)
 ```
 
-> EAS 빌드: `eas build --platform ios|android` (별도 EAS 셋업 필요)
+> EAS 빌드: `pnpm dlx eas-cli@latest build --platform ios|android` (별도 EAS 셋업 필요). 전역 `eas` 설치를 전제하지 않는다.
 
 ## 스택
 
@@ -91,15 +91,15 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 ```bash
 # 1. 이미 사용한 표시 버전인지 확인한다.
 node -p "require('./app.json').expo.version"
-eas build:list --limit 5 --non-interactive
+pnpm dlx eas-cli@latest build:list --limit 5 --non-interactive
 
 # 2. 이미 사용한 version이면 app.json version을 올려 별도 커밋·PR·main 머지 후 진행한다.
 # 3. Android production .aab 빌드를 큐에 넣는다.
-eas build --platform android --profile production --non-interactive --no-wait
+pnpm dlx eas-cli@latest build --platform android --profile production --non-interactive --no-wait
 
 # 4. 완료된 buildId를 확인한 뒤 internal track에 제출한다.
-eas build:list --limit 2 --non-interactive
-eas submit --platform android --profile production --id <buildId> --non-interactive
+pnpm dlx eas-cli@latest build:list --limit 2 --non-interactive
+pnpm dlx eas-cli@latest submit --platform android --profile production --id <buildId> --non-interactive
 ```
 
 `eas.json`의 Android submit 기본 track은 `internal`이다. 실사용자 공개는 Play Console에서 production으로 승격한다. iOS도 필요하면 `android`를 `ios`로 바꿔 같은 절차를 밟는다.
@@ -126,7 +126,7 @@ eas submit --platform android --profile production --id <buildId> --non-interact
 
 ```bash
 node -p "require('./app.json').expo.version"   # 1. git이 들고 있는 표시 버전
-eas build:list --limit 5 --non-interactive     # 2. EAS에 이미 올라간 빌드들의 appVersion
+pnpm dlx eas-cli@latest build:list --limit 5 --non-interactive # 2. EAS에 이미 올라간 빌드들의 appVersion
 ```
 
 1. **두 값이 같으면 그 버전은 이미 제출된 것** → `app.json`의 `version`을 올린 뒤 빌드한다.
@@ -147,8 +147,8 @@ eas build:list --limit 5 --non-interactive     # 2. EAS에 이미 올라간 빌�
 > **먼저 위 [배포 전 버전 확인](#배포-전-버전-확인-필수--모든-에이전트사람-공통)을 수행한다.** `version`은 자동으로 올라가지 않는다.
 
 ```bash
-eas build  --platform android --profile production --non-interactive --no-wait   # 빌드 큐잉(.aab)
-eas submit --platform android --profile production --id <buildId> --non-interactive
+pnpm dlx eas-cli@latest build --platform android --profile production --non-interactive --no-wait # 빌드 큐잉(.aab)
+pnpm dlx eas-cli@latest submit --platform android --profile production --id <buildId> --non-interactive
 ```
 
 - `eas.json`의 `submit.production.android`는 서비스 계정 키(`./sayojeong-...json`)로 업로드. **`track` 미지정 시 기본값은 `internal`** → 실사용자에게 가려면 `"track": "production"` 지정 또는 Play Console에서 프로덕션 승격 필요.
@@ -159,6 +159,6 @@ eas submit --platform android --profile production --id <buildId> --non-interact
 - `expo-updates` + `eas update:configure`로 셋업됨. `app.json`에 `updates.url`, `eas.json` 프로파일별 `channel`(production/preview/development) 지정.
 - 네이티브 변경(새 라이브러리, app.json 네이티브 설정, SDK 업)이 **없는** JS/TS 수정은:
   ```bash
-  eas update --branch production --message "<요약>"
+  pnpm dlx eas-cli@latest update --branch production --message "<요약>"
   ```
   → 해당 채널·동일 runtimeVersion 빌드를 설치한 기기에 다음 실행 시 반영. 네이티브 변경이 있으면 OTA 불가 → 새 스토어 빌드 필요.
