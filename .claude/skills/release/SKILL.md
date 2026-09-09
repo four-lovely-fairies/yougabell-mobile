@@ -59,7 +59,7 @@ git push origin <현재 브랜치>
 
 ```bash
 node -p "require('./app.json').expo.version"   # git이 들고 있는 표시 버전
-eas build:list --limit 5 --non-interactive     # 이미 EAS에 올라간 빌드의 appVersion
+pnpm exec eas build:list --limit 5 --non-interactive # 이미 EAS에 올라간 빌드의 appVersion
 ```
 
 - 두 값이 같으면 → 이미 제출된 버전 → `app.json`의 `version`을 올리고 `chore(mobile): 앱 버전 <이전> → <이후>`로 **별도 커밋**한 뒤 빌드한다. 올리지 않으면 App Store Connect가 재제출을 거부한다.
@@ -70,5 +70,5 @@ eas build:list --limit 5 --non-interactive     # 이미 EAS에 올라간 빌드�
 
 - 푸시된 커밋 목록 (`git log origin/<base>..HEAD --oneline` 또는 `git log --oneline -n <N>`)
 - 트리거된 배포 (Vercel URL, EAS Build ID 등)
-- mobile 빌드 시 **큐잉된 빌드의 appVersion**을 `eas build:list --limit 2`로 확인해 함께 보고
+- mobile 빌드 시 **큐잉된 빌드의 appVersion**을 `pnpm exec eas build:list --limit 2`로 확인해 함께 보고
 - 후속 수동 작업 (스토어 제출, 마이그레이션 적용 등)
