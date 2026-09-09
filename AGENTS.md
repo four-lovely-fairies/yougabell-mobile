@@ -103,7 +103,7 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 node -p "require('./app.json').expo.version"
 pnpm exec eas build:list --limit 5 --non-interactive
 
-# 2. 이미 사용한 version이면 app.json version을 올려 별도 커밋·PR·main 머지 후 진행한다.
+# 2. 이미 사용한 version이면 빌드를 중단한다. PR 전 버전 게이트가 누락된 상태다.
 # 3. Android production .aab 빌드를 큐에 넣는다.
 pnpm exec eas build --platform android --profile production --non-interactive --no-wait
 
