@@ -104,18 +104,24 @@ node -p "require('./app.json').expo.version"
 pnpm exec eas build:list --limit 5 --non-interactive
 
 # 2. 이미 사용한 version이면 빌드를 중단한다. PR 전 버전 게이트가 누락된 상태다.
-# 3. Android production .aab 빌드를 큐에 넣는다.
+# 3. Android와 iOS production 빌드를 각각 큐에 넣는다.
 pnpm exec eas build --platform android --profile production --non-interactive --no-wait
+pnpm exec eas build --platform ios --profile production --non-interactive --no-wait
 
-# 4. 완료된 buildId를 확인한 뒤 먼저 internal track에 제출한다.
-pnpm exec eas build:list --limit 2 --non-interactive
-pnpm exec eas submit --platform android --profile internal --id <buildId> --non-interactive
+# 4. 완료된 Android/iOS buildId를 확인한다.
+pnpm exec eas build:list --limit 4 --non-interactive
 
-# 5. 내부 QA 후 같은 buildId를 production track에 제출한다.
-pnpm exec eas submit --platform android --profile production --id <buildId> --non-interactive
+# 5. Android는 먼저 Google Play internal track에 제출한다.
+pnpm exec eas submit --platform android --profile internal --id <androidBuildId> --non-interactive
+
+# 6. iOS는 App Store Connect에 제출하여 TestFlight에서 검증한다.
+pnpm exec eas submit --platform ios --profile production --id <iosBuildId> --non-interactive
+
+# 7. Android 내부 QA 후 같은 buildId를 production track에 제출한다.
+pnpm exec eas submit --platform android --profile production --id <androidBuildId> --non-interactive
 ```
 
-`eas.json`에서 `submit.internal.android.track`은 `internal`, `submit.production.android.track`은 `production`이다. `production` submit은 실사용자 공개 트랙으로 전송하므로 내부 QA 전에는 실행하지 않는다. iOS도 필요하면 플랫폼에 맞는 submit 프로파일을 확인하고 같은 절차를 밟는다.
+`eas.json`에서 `submit.internal.android.track`은 `internal`, `submit.production.android.track`은 `production`이다. Android `production` submit은 실사용자 공개 트랙으로 전송하므로 내부 QA 전에는 실행하지 않는다. iOS `production` submit은 App Store Connect에 빌드를 업로드하며 곧바로 App Store에 공개하지 않는다. TestFlight 검증 후 App Store Connect에서 해당 빌드를 앱 버전에 연결해 심사 제출·출시한다.
 
 ### 버전 체계
 
@@ -160,12 +166,16 @@ pnpm exec eas build:list --limit 5 --non-interactive # 2. EAS에 이미 올라�
 > **먼저 위 [배포 전 버전 확인](#배포-전-버전-확인-필수--모든-에이전트사람-공통)을 수행한다.** `version`은 자동으로 올라가지 않는다.
 
 ```bash
-pnpm exec eas build --platform android --profile production --non-interactive --no-wait # 빌드 큐잉(.aab)
-pnpm exec eas submit --platform android --profile internal --id <buildId> --non-interactive # 내부 테스트
-pnpm exec eas submit --platform android --profile production --id <buildId> --non-interactive
+pnpm exec eas build --platform android --profile production --non-interactive --no-wait # Android AAB
+pnpm exec eas build --platform ios --profile production --non-interactive --no-wait     # iOS IPA
+pnpm exec eas submit --platform android --profile internal --id <androidBuildId> --non-interactive
+pnpm exec eas submit --platform ios --profile production --id <iosBuildId> --non-interactive
+# QA 후
+pnpm exec eas submit --platform android --profile production --id <androidBuildId> --non-interactive
 ```
 
 - `eas.json`의 `submit.internal.android`는 내부 테스트 트랙, `submit.production.android`는 프로덕션 트랙으로 업로드한다.
+- iOS `submit.production`은 App Store Connect/TestFlight 업로드 단계다. TestFlight QA 후 App Store Connect에서 심사 제출과 출시를 진행한다.
 - Android 자격증명(keystore)·환경변수(`EXPO_PUBLIC_*`)는 EAS 원격에 설정돼 있다.
 
 ### EAS Update (OTA)

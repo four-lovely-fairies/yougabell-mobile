@@ -72,6 +72,16 @@ pnpm exec eas submit --platform android --profile internal --id <BUILD_ID> --non
 pnpm exec eas submit --platform android --profile production --id <BUILD_ID> --non-interactive
 ```
 
+iOS는 production IPA를 App Store Connect에 업로드한 뒤 TestFlight에서 검증하고, App Store Connect에서 심사 제출·출시한다.
+
+```bash
+# 1. production IPA 빌드
+pnpm exec eas build --platform ios --profile production --non-interactive
+
+# 2. App Store Connect/TestFlight에 업로드
+pnpm exec eas submit --platform ios --profile production --id <BUILD_ID> --non-interactive
+```
+
 ### Android 네이티브 Google 로그인 설정
 
 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`는 현재 Supabase Google Provider가 사용하는 Web application OAuth Client ID다. 같은 Google Cloud 프로젝트에 패키지명 `com.sayojeong.yougabell`과 서명 인증서 SHA-1을 묶은 Android OAuth Client를 만들어야 한다.
