@@ -17,7 +17,7 @@ pnpm test               # jest
 pnpm reset-project      # scripts/reset-project.js (스캐폴더 보일러플레이트 초기화)
 ```
 
-> EAS 빌드: `eas build --platform ios|android` (별도 EAS 셋업 필요)
+> EAS 빌드: `pnpm exec eas build --platform ios|android` (별도 EAS 셋업 필요). 전역 `eas` 설치를 전제하지 않으며, 레포에 고정된 `eas-cli` 버전을 사용한다.
 
 ## 스택
 
@@ -84,6 +84,39 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 
 기본 흐름: **EAS Build → 스토어 제출(submit) → 사용자 스토어 업데이트**. JS-only 수정은 **EAS Update(OTA)**로 스토어 심사 없이 즉시 배포 가능.
 
+### 새 바이너리가 필요한 작업의 버전 범프 시점
+
+버전 확인·범프는 EAS Build 직전까지 미루지 않는다. 아래 변경을 포함한 작업은 새 스토어 바이너리가 필요하므로, **기능 PR을 머지하기 전에** 현재 `app.json` version과 기존 EAS production 빌드를 비교한다.
+
+- `ios/`, `android/`, `modules/`, config plugin(`plugins/`) 변경
+- 네이티브 모듈 또는 Expo SDK 추가·변경
+- `app.json`의 plugins·권한·아이콘·스플래시·네이티브 설정 변경
+
+현재 version이 이미 EAS 빌드에 사용되었다면 patch version을 올리고 `chore(mobile): 앱 버전 <이전> → <이후>` 별도 커밋을 **같은 기능 PR에 포함**한다. JS/TS-only이며 기존 바이너리에 OTA 가능한 변경은 이 규칙으로 version을 올리지 않는다. EAS Build 직전 확인은 누락을 잡는 마지막 안전장치다.
+
+### 새 네이티브 빌드 빠른 실행 순서
+
+네이티브 코드·Expo config plugin·`app.json` 네이티브 설정이 바뀐 경우(예: 앱 시작 계측)는 **OTA가 아니라 새 스토어 빌드**가 필요하다. 관련 웹 배포가 있다면 웹 PR을 먼저 main에 머지해 프로덕션 배포가 끝난 것을 확인하고, 버전 범프 커밋이 포함된 모바일 PR을 main에 머지한 checkout에서 아래를 실행한다.
+
+```bash
+# 1. 이미 사용한 표시 버전인지 확인한다.
+node -p "require('./app.json').expo.version"
+pnpm exec eas build:list --limit 5 --non-interactive
+
+# 2. 이미 사용한 version이면 빌드를 중단한다. PR 전 버전 게이트가 누락된 상태다.
+# 3. Android production .aab 빌드를 큐에 넣는다.
+pnpm exec eas build --platform android --profile production --non-interactive --no-wait
+
+# 4. 완료된 buildId를 확인한 뒤 먼저 internal track에 제출한다.
+pnpm exec eas build:list --limit 2 --non-interactive
+pnpm exec eas submit --platform android --profile internal --id <buildId> --non-interactive
+
+# 5. 내부 QA 후 같은 buildId를 production track에 제출한다.
+pnpm exec eas submit --platform android --profile production --id <buildId> --non-interactive
+```
+
+`eas.json`에서 `submit.internal.android.track`은 `internal`, `submit.production.android.track`은 `production`이다. `production` submit은 실사용자 공개 트랙으로 전송하므로 내부 QA 전에는 실행하지 않는다. iOS도 필요하면 플랫폼에 맞는 submit 프로파일을 확인하고 같은 절차를 밟는다.
+
 ### 버전 체계
 
 이름이 비슷한 두 값이 **서로 다르게 관리된다.** 혼동이 실제 배포 사고로 이어졌으므로 먼저 구분한다.
@@ -106,15 +139,15 @@ Supabase redirect allow-list에는 반드시 `yougabell://auth/callback`를 추�
 
 ```bash
 node -p "require('./app.json').expo.version"   # 1. git이 들고 있는 표시 버전
-eas build:list --limit 5 --non-interactive     # 2. EAS에 이미 올라간 빌드들의 appVersion
+pnpm exec eas build:list --limit 5 --non-interactive # 2. EAS에 이미 올라간 빌드들의 appVersion
 ```
 
 1. **두 값이 같으면 그 버전은 이미 제출된 것** → `app.json`의 `version`을 올린 뒤 빌드한다.
    - 올리지 않고 제출하면 App Store Connect가 마케팅 버전(`CFBundleShortVersionString`)으로 빌드를 식별하기 때문에 **"이미 사용된 버전"으로 재제출을 거부**한다.
    - 범프 폭: 버그 수정·재빌드 → patch(`1.1.1` → `1.1.2`), 기능 추가 → minor(`1.1.2` → `1.2.0`).
-2. **버전을 올렸으면 반드시 커밋해서 PR로 main에 반영한다.** 로컬에서만 고쳐 빌드하면 git과 스토어가 어긋난다.
+2. **버전을 올렸으면 기능 PR을 머지하기 전에 같은 PR의 별도 커밋으로 반영한다.** 로컬에서만 고쳐 빌드하거나, 기능 PR 머지 후 version-only PR을 뒤늦게 만들지 않는다.
    - 커밋은 별도로 분리한다: `chore(mobile): 앱 버전 <이전> → <이후>`
-   - 빌드 전에 커밋해도 되고 빌드 후 같은 브랜치에 얹어도 되지만, **머지 없이 다음 배포로 넘어가지 않는다.**
+   - 기능 PR을 머지하기 전에 커밋하며, **머지 없이 다음 배포로 넘어가지 않는다.**
 3. 빌드 완료 후 `eas build:list --limit 2`로 **큐잉된 빌드의 appVersion이 의도한 값인지** 확인하고 결과 보고에 포함한다.
 
 > 실제 사고 기록 — 둘 다 자동 증가가 있다고 오해해서 발생했다.
@@ -127,11 +160,12 @@ eas build:list --limit 5 --non-interactive     # 2. EAS에 이미 올라간 빌�
 > **먼저 위 [배포 전 버전 확인](#배포-전-버전-확인-필수--모든-에이전트사람-공통)을 수행한다.** `version`은 자동으로 올라가지 않는다.
 
 ```bash
-eas build  --platform android --profile production --non-interactive --no-wait   # 빌드 큐잉(.aab)
-eas submit --platform android --profile production --id <buildId> --non-interactive
+pnpm exec eas build --platform android --profile production --non-interactive --no-wait # 빌드 큐잉(.aab)
+pnpm exec eas submit --platform android --profile internal --id <buildId> --non-interactive # 내부 테스트
+pnpm exec eas submit --platform android --profile production --id <buildId> --non-interactive
 ```
 
-- `eas.json`의 `submit.production.android`는 서비스 계정 키(`./sayojeong-...json`)로 업로드. **`track` 미지정 시 기본값은 `internal`** → 실사용자에게 가려면 `"track": "production"` 지정 또는 Play Console에서 프로덕션 승격 필요.
+- `eas.json`의 `submit.internal.android`는 내부 테스트 트랙, `submit.production.android`는 프로덕션 트랙으로 업로드한다.
 - Android 자격증명(keystore)·환경변수(`EXPO_PUBLIC_*`)는 EAS 원격에 설정돼 있다.
 
 ### EAS Update (OTA)
@@ -139,6 +173,6 @@ eas submit --platform android --profile production --id <buildId> --non-interact
 - `expo-updates` + `eas update:configure`로 셋업됨. `app.json`에 `updates.url`, `eas.json` 프로파일별 `channel`(production/preview/development) 지정.
 - 네이티브 변경(새 라이브러리, app.json 네이티브 설정, SDK 업)이 **없는** JS/TS 수정은:
   ```bash
-  eas update --branch production --message "<요약>"
+  pnpm exec eas update --branch production --message "<요약>"
   ```
   → 해당 채널·동일 runtimeVersion 빌드를 설치한 기기에 다음 실행 시 반영. 네이티브 변경이 있으면 OTA 불가 → 새 스토어 빌드 필요.

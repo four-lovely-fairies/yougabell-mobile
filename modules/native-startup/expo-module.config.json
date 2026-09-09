@@ -1,0 +1,11 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["NativeStartupModule"],
+    "podspecPath": "ios/NativeStartup.podspec",
+    "swiftModuleName": "NativeStartup"
+  },
+  "android": {
+    "modules": ["com.sayojeong.yougabell.nativestartup.NativeStartupModule"]
+  }
+}
