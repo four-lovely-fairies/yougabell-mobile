@@ -183,6 +183,9 @@ pnpm exec eas submit --platform android --profile production --id <androidBuildI
 - `expo-updates` + `eas update:configure`로 셋업됨. `app.json`에 `updates.url`, `eas.json` 프로파일별 `channel`(production/preview/development) 지정.
 - 네이티브 변경(새 라이브러리, app.json 네이티브 설정, SDK 업)이 **없는** JS/TS 수정은:
   ```bash
-  pnpm exec eas update --branch production --message "<요약>"
+  pnpm eas:update:prod --message "<요약>"
   ```
   → 해당 채널·동일 runtimeVersion 빌드를 설치한 기기에 다음 실행 시 반영. 네이티브 변경이 있으면 OTA 불가 → 새 스토어 빌드 필요.
+- production OTA는 원시 `eas update` 명령을 직접 조립하지 않고 위 package script를 사용한다. 이 스크립트의 `--environment production`을 제거하지 않는다.
+- 이 프로젝트는 Expo SDK 54이므로 `--environment`를 생략하면 명령을 실행한 로컬/worktree의 `.env`로 폴백한다. gitignored `.env`가 없는 worktree에서 실행하면 `EXPO_PUBLIC_WEB_URL`, `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 등이 번들에서 누락될 수 있다.
+- `--environment production`은 EAS 서버의 production 환경 변수를 사용하고 로컬 `.env`는 사용하지 않는다. 필요한 `EXPO_PUBLIC_*` 값이 EAS production 환경에 등록되어 있는지도 배포 전에 확인한다. `eas.json`의 `build.<profile>.env`만으로는 EAS Update에 변수가 전달되지 않는다.

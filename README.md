@@ -82,6 +82,16 @@ pnpm exec eas build --platform ios --profile production --non-interactive
 pnpm exec eas submit --platform ios --profile production --id <BUILD_ID> --non-interactive
 ```
 
+### Production OTA 업데이트
+
+네이티브 변경이 없는 JS/TS 수정은 다음 스크립트로 배포한다.
+
+```bash
+pnpm eas:update:prod --message "<배포 요약>"
+```
+
+이 스크립트에는 `--branch production --environment production --non-interactive`가 고정되어 있다. `--environment production`을 생략하면 Expo SDK 54에서는 실행한 로컬/worktree의 `.env`로 폴백한다. `.env`가 없는 환경에서 실행하면 Supabase와 Web URL 같은 `EXPO_PUBLIC_*` 값이 OTA 번들에서 누락될 수 있으므로 production 업데이트에 원시 `eas update` 명령을 사용하지 않는다.
+
 ### Android 네이티브 Google 로그인 설정
 
 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`는 현재 Supabase Google Provider가 사용하는 Web application OAuth Client ID다. 같은 Google Cloud 프로젝트에 패키지명 `com.sayojeong.yougabell`과 서명 인증서 SHA-1을 묶은 Android OAuth Client를 만들어야 한다.
