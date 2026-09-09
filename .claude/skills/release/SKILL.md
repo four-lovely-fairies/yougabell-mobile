@@ -23,7 +23,31 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Skill
 - 커밋 후 `git status`로 남은 변경사항 없음을 반드시 확인
 - 확인 완료 후 다음 단계 진행
 
-## 2단계: /sync-docs 실행
+## 2단계: mobile 네이티브 재빌드·버전 게이트 (PR 머지 전에 수행)
+
+`yougabell-mobile`에서는 현재 브랜치 전체 변경을 base branch와 비교하여 새 스토어 바이너리가 필요한지 판별한다. 이 단계는 **push·PR 머지·EAS Build보다 먼저** 수행한다.
+
+새 바이너리가 필요한 대표 변경:
+
+- `ios/`, `android/`, `modules/`, config plugin(`plugins/`)의 변경
+- 네이티브 모듈 추가·변경, Expo SDK 변경
+- `app.json`의 plugins·권한·아이콘·스플래시·네이티브 설정 변경
+
+JS/TS만 바뀌었고 기존 바이너리로 EAS Update가 가능한 작업이면 버전을 올리지 않는다.
+
+새 바이너리가 필요하면:
+
+```bash
+node -p "require('./app.json').expo.version"
+pnpm exec eas build:list --limit 5 --non-interactive
+```
+
+- 현재 `app.json` version이 기존 EAS production 빌드에 이미 사용되었으면 patch version을 올린다.
+- 버전 변경은 `chore(mobile): 앱 버전 <이전> → <이후>`라는 **별도 커밋**으로 만들고, 기능 변경과 같은 PR에 포함한다.
+- 버전 범프 없이 PR을 머지한 다음 version-only 후속 PR을 만들지 않는다.
+- 여러 플랫폼을 한 번에 배포해도 `app.json` version은 한 번만 올린다. buildNumber/versionCode는 EAS remote autoIncrement가 별도로 관리한다.
+
+## 3단계: /sync-docs 실행
 
 ```
 /sync-docs today
@@ -32,7 +56,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Skill
 - 오늘 커밋 중 문서 미반영 항목 점검
 - 누락 시 문서 갱신 + 추가 커밋
 
-## 3단계: 원격 푸시
+## 4단계: 원격 푸시
 
 ```bash
 git push origin <현재 브랜치>
@@ -41,7 +65,7 @@ git push origin <현재 브랜치>
 - 보호 브랜치(`main` / `develop`)는 PR 흐름 권장 — 직접 푸시 전 사용자에게 확인
 - 푸시 실패 시 사용자에게 보고하고 중단
 
-## 4단계: 레포별 후속 배포
+## 5단계: 레포별 후속 배포
 
 각 레포 `AGENTS.md`에 명시된 배포 절차를 따름.
 
@@ -53,20 +77,20 @@ git push origin <현재 브랜치>
 | `yougabell-admin`      | Vercel 자동 배포 (`main` push에 트리거)        |
 | `yougabell-mobile`     | EAS Build — **아래 버전 게이트 통과 후** 빌드  |
 
-### mobile 전용: 빌드 전 버전 게이트 (건너뛰지 않는다)
+### mobile 전용: 빌드 직전 재확인 (마지막 안전장치)
 
-`app.json`의 `version`은 **자동으로 올라가지 않는다.** EAS `autoIncrement`가 올리는 것은 buildNumber/versionCode뿐이다. `eas build` 큐잉 전에:
+2단계에서 이미 버전 범프가 같은 PR에 포함되어 있어야 한다. `app.json`의 `version`은 자동으로 올라가지 않으며, EAS `autoIncrement`가 올리는 것은 buildNumber/versionCode뿐이다. `eas build` 큐잉 직전에 아래를 다시 확인한다.
 
 ```bash
 node -p "require('./app.json').expo.version"   # git이 들고 있는 표시 버전
 pnpm exec eas build:list --limit 5 --non-interactive # 이미 EAS에 올라간 빌드의 appVersion
 ```
 
-- 두 값이 같으면 → 이미 제출된 버전 → `app.json`의 `version`을 올리고 `chore(mobile): 앱 버전 <이전> → <이후>`로 **별도 커밋**한 뒤 빌드한다. 올리지 않으면 App Store Connect가 재제출을 거부한다.
-- 버전을 올렸는데 커밋하지 않은 채 배포를 끝내지 않는다 (git ↔ 스토어 드리프트).
+- 두 값이 같으면 빌드하지 않는다. PR 단계의 버전 범프가 빠진 것이므로 새 브랜치·PR로 먼저 main을 바로잡는다.
+- 로컬에서만 version을 고쳐 빌드하지 않는다. 반드시 git main과 스토어 버전을 일치시킨다.
 - 상세 규칙·사고 이력은 [`AGENTS.md`](../../../AGENTS.md)의 "배포 전 버전 확인" 참조.
 
-## 5단계: 결과 보고
+## 6단계: 결과 보고
 
 - 푸시된 커밋 목록 (`git log origin/<base>..HEAD --oneline` 또는 `git log --oneline -n <N>`)
 - 트리거된 배포 (Vercel URL, EAS Build ID 등)
